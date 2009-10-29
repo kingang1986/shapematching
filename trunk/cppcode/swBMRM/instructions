@@ -1,0 +1,8 @@
+-- The script 'build.sh' (in the folder sourcefiles) will copy the relevant files and compile the program.
+-- Edit the configuration file house.config. This should be the only file you need to change.
+-- To learn, type
+   ./linear-bmrm-train FPEG.config
+-- To predict, type
+   ./linear-bmrm-predict FPEG.config
+
+Note that the datasets have *not* been included (as they are very large). Please contact me if you require them. Please contact Longbin Chen for the code used in the MNIST experiment. The folders FPEG_one and FPEG_all contain the results reported in the paper.

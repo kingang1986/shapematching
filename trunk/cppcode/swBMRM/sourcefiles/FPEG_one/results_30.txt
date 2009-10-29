@@ -1,0 +1,12 @@
+Category 30
+  lambda: learning-loss / loss
+    0.01     training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.05     (0.044721)/0.1      (0.054772)
+    0.1      training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.05     (0.044721)/0.1      (0.054772)
+    1        training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.1      (0.054772)/0.1      (0.054772)
+    10       training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.0      (0.0     )/0.1      (0.054772)
+    100      training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.0      (0.0     )/0.1      (0.054772)
+    1000     training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.0      (0.0     )/0.1      (0.054772)
+    10000    training: 0.0      (0.0     )/0.0      (0.0     ) validation: 0.0      (0.0     )/0.1      (0.054772)
+
+Testing:
+    0.0      (0.0     )/0.0      (0.0     ) (lambda = 10)
