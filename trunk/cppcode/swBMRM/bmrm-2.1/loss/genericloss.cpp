@@ -84,7 +84,8 @@ void CGenericLoss::Phi(int n1, int* Knearest, adjmatrix** matches, Scalar* res)
         {
           Phi1(_data->corners[n1]->at(x), _data->corners[n2]->at(y),
                _data->features[n1]->at(x), _data->features[n2]->at(y), phi);
-          for (int i = 0; i < dimOfWeight; i ++) res[i] -= phi[i];
+          for (int i = 0; i < dimOfWeight; i ++) 
+             res[i] -= phi[i];
         }
   }
   delete [] phi;
