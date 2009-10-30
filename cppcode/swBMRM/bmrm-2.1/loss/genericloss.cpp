@@ -26,7 +26,8 @@ using namespace cimg_library;
  */
 Scalar loss1(int search_class, int scene_class)
 {
-  if (search_class == scene_class) return 0;
+  if (search_class == scene_class) 
+       return 0;
   return 1;
 }
 
@@ -37,10 +38,11 @@ Scalar loss1(int search_class, int scene_class)
  */
 void CGenericLoss::Phi1(Point p1, Point p2, Scalar* a, Scalar* b, Scalar* res)
 {
-  for (int i = 0; i < dimOfWeight ; i ++) res[i] = 0;
+  for (int i = 0; i < dimOfWeight ; i ++) 
+      res[i] = 0;
 
   if (p1.dummy && p2.dummy)
-    return;
+     return;
 
   if (p1.dummy)
   {
@@ -67,9 +69,30 @@ void CGenericLoss::Phi1(Point p1, Point p2, Scalar* a, Scalar* b, Scalar* res)
     }
 }
 
-/**
- * (negative) cost function.
- */
+void CGenericLoss::Phi(int n1, int n2, adjmatrix* matches, Scalar* res)
+{ 
+    for (int i = 0; i < dimOfWeight; i ++) 
+        res[i] = 0;
+    Scalar* phi = new Scalar[dimOfWeight];
+    for (int i = 0; i < dimOfWeight; i ++) 
+        res[i] = 0;
+    for (int x = 0; x < matches->n1; x ++)
+    {
+      for (int y = 0; y < matches->n2; y ++)
+      {
+        if (matches->mat[x][y] == 1)
+        {
+          Phi1(_data->corners[n1]->at(x), _data->corners[n2]->at(y),
+               _data->features[n1]->at(x), _data->features[n2]->at(y), phi);
+          for (int i = 0; i < dimOfWeight; i ++) 
+             res[i] -= phi[i];
+        }
+      }
+    }
+    delete[] phi;
+
+}
+
 void CGenericLoss::Phi(int n1, int* Knearest, adjmatrix** matches, Scalar* res)
 {
   for (int i = 0; i < dimOfWeight; i ++) res[i] = 0;
@@ -121,6 +144,7 @@ adjmatrix* dp(Scalar** matchcosts, int n, int m, Scalar* cost)
   }
 
   for (int i = 1; i < n; i ++)
+  {
     for (int j = 1; j < m; j ++)
     {
       Scalar c_up = costmatrix[i-1][j] + matchcosts[i][0];
@@ -143,7 +167,7 @@ adjmatrix* dp(Scalar** matchcosts, int n, int m, Scalar* cost)
         dirmatrix[i][j] = DIAGONAL;
       }
     }
-
+  }
   // Trace back through the arrows to get the adjacency matrix...
   adjmatrix* res = new adjmatrix(n,m);
   int cn = n - 1;
@@ -282,14 +306,238 @@ CGenericLoss::CGenericLoss(CModel* &model, CGenericData* &data)
   dimOfFeature = data->dimOfFeature;
   dimOfWeight = data->dimOfWeight;
   _Kneighbours = data->_Kneighbours;
+  _LossType = config.GetString("Loss.Type");
 }
 
 /** Destructor. */
 CGenericLoss::~CGenericLoss() {}
 
 void CGenericLoss::Usage() {}
-
 void CGenericLoss::ComputeLossAndGradient(Scalar& loss, TheMatrix& grad)
+{
+    if (_LossType == "KNN") 
+        KNNLoss(loss, grad);
+    if (_LossType == "AVG_K")
+        AvgKLoss(loss, grad);
+    return ;
+}
+/* Calculate the average matching score of top K samples from each class c, Cost_k
+   Please note that the matching score to the same class uses the labeled match
+    the matching score to other classes uses optimal match with current w */
+//find top K results from class c that are most similar to sample n1
+
+adjmatrix* CGenericLoss::GetDP(int n1, int n2, Scalar* weights, Scalar& cost)
+{
+    cost = 0;
+    int n = _data->shape_sizes[n1];
+    int m = _data->shape_sizes[n2];
+    //create cost matrix
+    Scalar* phi = new Scalar [dimOfWeight];
+    Scalar** costmatrix = new Scalar*[n];
+    for (int i = 0; i < n; i ++)
+    {
+        costmatrix[i] = new Scalar[m];
+    }
+    for (int i = 0; i < n; i ++)
+    {
+      for (int j = 0; j < m; j ++)
+      {
+        Scalar cost = 0;
+        Phi1(_data->corners[n1]->at(i), _data->corners[n2]->at(j),
+             _data->features[n1]->at(i), _data->features[n2]->at(j), phi);
+        if (weights != NULL)
+          for (int k = 0; k < dimOfWeight; k ++) cost += weights[k]*phi[k];
+        else
+          for (int k = 0; k < dimOfWeight; k ++) cost += phi[k];
+        costmatrix[i][j] = cost;
+      }
+    }
+    adjmatrix* a = dp(costmatrix, n, m, &cost);
+    for (int i = 0; i < n; i ++)
+      delete [] costmatrix[i];
+    delete [] costmatrix;
+    delete[] phi;
+    return a;
+}
+int* CGenericLoss::findTopKLabeled(int n1, int c, Scalar* weights, adjmatrix** res_adjs, Scalar& avgcost)
+{
+  vector<int> testsamples;
+  for (int i = 0; i < _data->classes.size(); i ++)
+  {
+      if (_data->classes[i] == c)
+          testsamples.push_back(i);
+  } 
+  int examps = (int)testsamples.size();
+  map<int,adjmatrix*> adjs;
+  pair<Scalar,int>* costs = new pair<Scalar,int> [examps];
+  Scalar* phi = new Scalar [dimOfWeight];
+
+  int current = 0;
+
+  for (int i = 0; i < (int)testsamples.size(); i ++)
+  {
+      int n2 = testsamples[i];
+      adjmatrix* a = _data->correct[pair<int,int>(n1, n2)];
+      Phi(n1, n2, a,  phi);
+      Scalar cost = 0.0;
+      for (int s = 0; s < dimOfWeight; s ++ ) cost += weights[s] * phi[s];
+      adjs[n2] = a;
+      costs[current] = pair<Scalar,int>(cost, n2);
+      current ++;
+  }
+
+  qsort(costs, testsamples.size(), sizeof(pair<Scalar,int>), compare);
+
+  int* res = new int[_Kneighbours];
+  for (int k = 0; k < _Kneighbours; k ++)
+  {
+      res[k] = costs[k].second;
+      res_adjs[k] = adjs[res[k]];
+  }
+  delete [] phi;
+  return res;
+}
+
+int* CGenericLoss::findTopK(int n1, int c, Scalar* weights, adjmatrix** res_adjs, Scalar& avgcost)
+{
+  vector<int> testsamples;
+  for (int i = 0; i < _data->classes.size(); i ++)
+  {
+      if (_data->classes[i] == c)
+          testsamples.push_back(i);
+  } 
+  int examps = (int)testsamples.size();
+  map<int,adjmatrix*> adjs;
+  pair<Scalar,int>* costs = new pair<Scalar,int> [examps];
+  Scalar* phi = new Scalar [dimOfWeight];
+
+  int current = 0;
+
+  for (int i = 0; i < (int)testsamples.size(); i ++)
+  {
+      int n2 = testsamples[i];
+      Scalar cost;
+      adjmatrix* a = GetDP(n1, n2, weights, cost);
+      adjs[n2] = a;
+      costs[current] = pair<Scalar,int>(cost, n2);
+      current ++;
+  }
+
+  qsort(costs, testsamples.size(), sizeof(pair<Scalar,int>), compare);
+
+  int* res = new int[_Kneighbours];
+  for (int k = 0; k < _Kneighbours; k ++)
+  {
+      res[k] = costs[k].second;
+      res_adjs[k] = adjs[res[k]];
+      printf("neight of sample %d, class %d,  %d: %d, dis %f\n",n1, c, k, res[k], costs[k].first); 
+  }
+  for (int k = _Kneighbours; k < examps; k ++)
+  {
+      delete adjs[costs[k].second];
+  }
+  delete [] costs;
+  delete [] phi;
+  return res;
+}
+
+
+void CGenericLoss::AvgKLoss(Scalar& loss, TheMatrix& grad)
+{
+  TheMatrix &w = _model->GetW();
+  loss = 0;
+  grad.Zero();
+
+  Scalar* dat = w.Data();
+  Scalar* raw_g = grad.Data();
+  for (int i = 0; i < dimOfWeight; i ++) 
+      raw_g[i] = 0;  
+  Scalar* lossi = new Scalar [_data->_N];
+  Scalar** raw_gi = new Scalar* [_data->_N];
+
+  int i;
+  
+  for (i = 0; i < _data->_N; i ++)
+  {
+    int n1 = _data->categoryinds[i]; // n1 is the class of sample i 
+    int c1 = _data->classes[n1]; //to determn 
+    Scalar* resy = new Scalar [dimOfWeight]; // phi
+    Scalar* resybar = new Scalar [dimOfWeight]; // phi
+    Scalar  mincost = 1e10; 
+    Scalar  samecost = 1e10;
+    //find the worst negative category
+    for (int c = 1; c < (int)_data->categories.size() + 1; c ++)
+    {
+        if (c != c1) 
+        {
+            Scalar avgcost;
+            adjmatrix** ybar_labelling = new adjmatrix* [_Kneighbours];
+            int* ybar = findTopK(i, c, dat, ybar_labelling, avgcost); 
+            if (mincost > avgcost)
+            {
+                Phi(i, ybar, ybar_labelling, resybar);
+                mincost = avgcost;
+            }
+            //release temp memory
+            for (int k = 0; k < _Kneighbours; k ++) 
+               delete ybar_labelling[k];
+            delete [] ybar;
+            delete [] ybar_labelling;
+        }
+    }
+    //find the best positive category
+    adjmatrix** correct_adjs = new adjmatrix* [_Kneighbours];
+    int* correct_neighbours = findTopKLabeled(n1, c1, dat, correct_adjs, samecost); 
+
+    printf(".");
+    fflush(stdout);
+
+    Phi(n1, correct_neighbours, correct_adjs, resy);
+
+    Scalar inp = 0;
+    for (int j = 0; j < dimOfWeight; j ++)
+      inp += dat[j]*(resybar[j]-resy[j]);
+
+    //Scalar labloss = LabelLoss(n1, ybar);
+    Scalar labloss = 1; 
+    //if (inp + labloss > 0)
+      lossi[i] = labloss;
+
+    raw_gi[i] = new Scalar [dimOfWeight];
+    for (int j = 0; j < dimOfWeight; j ++)
+    {
+      //if (inp + labloss > 0)
+      {
+        lossi[i] += dat[j]*(resybar[j]-resy[j]);
+        raw_gi[i][j] = (1.0/_data->_N)*(resybar[j]-resy[j]);
+      }
+    }
+
+    delete [] resy;
+    delete [] resybar;
+
+    delete [] correct_neighbours;
+    delete [] correct_adjs;
+  }
+  printf("\r");
+
+//   for (int i = 0; i < Weights; i ++) cout << dat[i] << endl;
+//   cout << endl;
+
+  for (int j = 0; j < _data->_N; j ++)
+  {
+    loss += lossi[j];
+    for (int k = 0; k < dimOfWeight; k ++)
+      raw_g[k] += raw_gi[j][k];
+
+    delete [] raw_gi[j];
+  }
+  delete [] raw_gi;
+  delete [] lossi;
+
+  loss = loss/_data->_N;
+}
+void CGenericLoss::KNNLoss(Scalar& loss, TheMatrix& grad)
 {
   TheMatrix &w = _model->GetW();
   loss = 0;
@@ -298,7 +546,7 @@ void CGenericLoss::ComputeLossAndGradient(Scalar& loss, TheMatrix& grad)
   Scalar* dat = w.Data();
   Scalar* raw_g = grad.Data();
 
-  Configuration &config = Configuration::GetInstance();
+  //Configuration &config = Configuration::GetInstance();
 
   //Scalar lambda = config.GetDouble("BMRM.lambda");
 

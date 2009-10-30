@@ -47,10 +47,17 @@ class CGenericLoss : public CLoss
 
   protected:
     void Phi(int n1, int* Knearest, adjmatrix** matches, Scalar* res);
+    void Phi(int n1, int n2, adjmatrix* matches, Scalar* res);
     void Phi1(Point p1, Point p2, Scalar* a, Scalar* b, Scalar* res);
-    unsigned int dimOfFeature;
-    unsigned int dimOfWeight;
-    unsigned int _Kneighbours;
+    int dimOfFeature;
+    int dimOfWeight;
+    int _Kneighbours;
+    string _LossType; // choices: AVG_K, KNN
+    void KNNLoss(Scalar& loss, TheMatrix& grad);
+    void AvgKLoss(Scalar& loss, TheMatrix& grad);
+    adjmatrix* GetDP(int n1, int n2, Scalar* weights, Scalar & cost);
+    int* findTopK(int n1, int c, Scalar* weight, adjmatrix** res_adj, Scalar& cost);
+    int* findTopKLabeled(int n1, int c, Scalar* weight, adjmatrix** res_adj, Scalar& cost);
 
 
     CGenericData* _data;
