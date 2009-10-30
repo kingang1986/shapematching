@@ -205,9 +205,6 @@ CGenericData::CGenericData()
     // Add one to the index, since zero actually corresponds to the dummy node.
     while (fscanf(f, "%d %d", &c1, &c2) == 2)
     {
-      //longbin
-      if (c1 == -1 || c2 == -1)
-         continue;
    
       c1 ++;
       c2 ++;

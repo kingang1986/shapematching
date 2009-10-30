@@ -373,28 +373,38 @@ int* CGenericLoss::findTopKLabeled(int n1, int c, Scalar* weights, adjmatrix** r
   Scalar* phi = new Scalar [dimOfWeight];
 
   int current = 0;
-
+  //assert((int) testsamples.size() == 11);
+  //printf ("%d ", testsamples.size());
   for (int i = 0; i < (int)testsamples.size(); i ++)
   {
       int n2 = testsamples[i];
+      if (n1 == n2) continue;
       adjmatrix* a = _data->correct[pair<int,int>(n1, n2)];
+   //   printf("%d,%d: %d %d\n", n1, n2, a->n1, a->n2);
+      assert(a);
       Phi(n1, n2, a,  phi);
       Scalar cost = 0.0;
       for (int s = 0; s < dimOfWeight; s ++ ) cost += weights[s] * phi[s];
       adjs[n2] = a;
       costs[current] = pair<Scalar,int>(cost, n2);
+    //  printf("add %d %f\n", n2, cost);
       current ++;
   }
 
-  qsort(costs, testsamples.size(), sizeof(pair<Scalar,int>), compare);
-
+  qsort(costs, current , sizeof(pair<Scalar,int>), compare);
+  avgcost = 0;
   int* res = new int[_Kneighbours];
   for (int k = 0; k < _Kneighbours; k ++)
   {
+      avgcost += costs[k].first;
+      Scalar f = 0; 
+ //      for (int ss = 0; ss < _Kneighbours; ss ++ ) f +=  
       res[k] = costs[k].second;
       res_adjs[k] = adjs[res[k]];
+     // printf("sorted %d %d %f %d\n", k, res[k], costs[k].first, res_adjs[k]->n1);
   }
   delete [] phi;
+  delete[] costs;
   return res;
 }
 
@@ -423,14 +433,15 @@ int* CGenericLoss::findTopK(int n1, int c, Scalar* weights, adjmatrix** res_adjs
       current ++;
   }
 
-  qsort(costs, testsamples.size(), sizeof(pair<Scalar,int>), compare);
+  qsort(costs, current, sizeof(pair<Scalar,int>), compare);
+  avgcost = 0;
 
   int* res = new int[_Kneighbours];
   for (int k = 0; k < _Kneighbours; k ++)
   {
+      avgcost += costs[k].first;
       res[k] = costs[k].second;
       res_adjs[k] = adjs[res[k]];
-      printf("neight of sample %d, class %d,  %d: %d, dis %f\n",n1, c, k, res[k], costs[k].first); 
   }
   for (int k = _Kneighbours; k < examps; k ++)
   {
@@ -495,24 +506,33 @@ void CGenericLoss::AvgKLoss(Scalar& loss, TheMatrix& grad)
     Phi(n1, correct_neighbours, correct_adjs, resy);
 
     Scalar inp = 0;
-    for (int j = 0; j < dimOfWeight; j ++)
-      inp += dat[j]*(resybar[j]-resy[j]);
-
-    //Scalar labloss = LabelLoss(n1, ybar);
-    Scalar labloss = 1; 
-    //if (inp + labloss > 0)
-      lossi[i] = labloss;
-
-    raw_gi[i] = new Scalar [dimOfWeight];
+    Scalar cst1 = 0;
+    Scalar cst2 = 0;
     for (int j = 0; j < dimOfWeight; j ++)
     {
-      //if (inp + labloss > 0)
-      {
-        lossi[i] += dat[j]*(resybar[j]-resy[j]);
+      inp += dat[j]*(resybar[j]-resy[j]);
+      cst1 += dat[j] * resybar[j];
+      cst2 += dat[j] * resy[j];
+    }
+    Scalar labloss = 1; 
+    raw_gi[i] = new Scalar [dimOfWeight];
+    
+    if (inp + labloss > 0)
+    {
+        lossi[i] = inp + labloss;
+        for (int j = 0; j < dimOfWeight; j ++)
+        {
+            raw_gi[i][j] = (1.0/_data->_N)*(resybar[j]-resy[j]);
+        }
+    }
+    else for (int j = 0; j < dimOfWeight; j ++)
+    {
+        lossi[i] = 0; 
         raw_gi[i][j] = (1.0/_data->_N)*(resybar[j]-resy[j]);
-      }
+       // raw_gi[i][j] = 0; 
     }
 
+    printf("cost: same cls %f vs diff clas %f, loss %f = 1 + %f, %f, %f\n", samecost, mincost, lossi[i], inp, cst2, cst1);
     delete [] resy;
     delete [] resybar;
 
@@ -534,8 +554,8 @@ void CGenericLoss::AvgKLoss(Scalar& loss, TheMatrix& grad)
   }
   delete [] raw_gi;
   delete [] lossi;
-
   loss = loss/_data->_N;
+  printf("total loss = %f \n", loss);
 }
 void CGenericLoss::KNNLoss(Scalar& loss, TheMatrix& grad)
 {
