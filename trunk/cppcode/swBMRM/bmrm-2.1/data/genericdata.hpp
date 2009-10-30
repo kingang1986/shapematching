@@ -85,6 +85,7 @@ class CGenericData: public CData
     vector<int>* negativeset;
     vector<int>* positiveset;
     map<pair<int,int>,adjmatrix*> correct; // Labelled ordering of the points in this set.
+    map<int,vector<int>*> categories;
 
     // Information about the images, for output.
     vector<char*> imnames;

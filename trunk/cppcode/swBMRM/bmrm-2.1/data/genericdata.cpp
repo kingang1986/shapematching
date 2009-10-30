@@ -67,7 +67,7 @@ CGenericData::CGenericData()
   dimOfFeature = config.GetInt("Data.dimOfFeature");
   dimOfWeight = 2 * dimOfFeature + 1;
 
-  map<int,vector<int>* > categories;
+  //map<int,vector<int>* > categories;
   double* featmax = new double [dimOfFeature];
   for (int i = 0; i < dimOfFeature; i ++) featmax[i] = -1;
 
@@ -237,7 +237,7 @@ CGenericData::CGenericData()
   _N = (int) categoryinds.size();
   _total = (int) corners.size();
 
-  printf("Finished reading data., categories %d, total %d\n", _N, _total);
+  printf("Finished reading data., samples in training %d, total %d\n", _N, _total);
 }
 
 CGenericData::~CGenericData()
