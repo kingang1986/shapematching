@@ -27,9 +27,11 @@ public:
     ~CSequence();
     int Allocate(int nPoint, int nFeatureDim);
     DATATYPE* GetPoint(int iIndex);
-	int m_iFeatureDim;
-	int m_iPoint;
-	DATATYPE** m_vFeature;
+    int m_iFeatureDim;
+    int m_iPoint;
+    DATATYPE** m_vFeature;
+    DATATYPE* m_vX;
+    DATATYPE* m_vY;
     void Release();
 
 };
@@ -78,38 +80,38 @@ public:
 class CModel
 {
 protected:
-	void Release();
+    void Release();
 public:
-	CModel();
-	~CModel();
+    CModel();
+    ~CModel();
 
 public: //data
-	int Read(const  char* strFile);
-	int Write(const char* strFile);
-	void Init(int iParamDim);
-	void InitTheta(int iPatternNum);
-	void Print();
+    int Read(const  char* strFile);
+    int Write(const char* strFile);
+    void Init(int iParamDim);
+    void InitTheta(int iPatternNum);
+    void Print();
 
-	//data
-	int m_iPatternNum;
-	int m_iFeatureDim;
-	int m_iParamDim;
-	int* m_vFeatureIndex;
-	int* m_vWeightIndex;
-	int* m_vMapType;
-	int* m_vMatchOrGap; //MAPTYPE_MATCH or MAPTYPE_GAP
+    //data
+    int m_iPatternNum;
+    int m_iFeatureDim;
+    int m_iParamDim;
+    int* m_vFeatureIndex;
+    int* m_vWeightIndex;
+    int* m_vMapType;
+    int* m_vMatchOrGap; //MAPTYPE_MATCH or MAPTYPE_GAP
 
-	//
-	int m_iGapCount;
-	int* m_vGap;
-	int m_iMatchCount;
-	int* m_vMatch;
-	double* m_vTheta;
+    //
+    int m_iGapCount;
+    int* m_vGap;
+    int m_iMatchCount;
+    int* m_vMatch;
+    double* m_vTheta;
 
-	//model weights
-	int m_iMapNum;
-	double* m_vWeight;
-	int* m_vSign;
+    //model weights
+    int m_iMapNum;
+    double* m_vWeight;
+    int* m_vSign;
 
 };
 
@@ -117,27 +119,27 @@ public: //data
 class CModel
 {
 protected:
-	void Release();
+    void Release();
 
 public:
-	CModel();
-	~CModel();
-	int Read(const  char* strFile);
-	int Write(const char* strFile);
-	void Init(int iParamDim, int iFeatureDim);
-	void InitTheta(int iPatternNum);
-	void Print();
+    CModel();
+    ~CModel();
+    int Read(const  char* strFile);
+    int Write(const char* strFile);
+    void Init(int iParamDim, int iFeatureDim);
+    void InitTheta(int iPatternNum);
+    void Print();
 
-	//data
-	int m_iPatternNum;
-	int m_iFeatureDim;
-	int m_iParamDim;
-	double* m_vWeight;
-	int* m_vSign;
-	int* m_vGapMap;
-	double* m_vTheta;
-	int* m_vMatchMap;
-	bool m_bGapExtension;
+    //data
+    int m_iPatternNum;
+    int m_iFeatureDim;
+    int m_iParamDim;
+    double* m_vWeight;
+    int* m_vSign;
+    int* m_vGapMap;
+    double* m_vTheta;
+    int* m_vMatchMap;
+    bool m_bGapExtension;
 
 };
 */

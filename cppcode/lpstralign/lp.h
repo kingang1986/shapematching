@@ -8,18 +8,18 @@
 class CPattern
 {
 public:
-	int m_id;
-	CSetOfSeq* m_original;
-	vector<CSetOfSeq*> m_vHomolog;
-	vector<CSetOfSeq*> m_vDecoy;
-	int m_iHomolog;
-	int m_iDecoy;
-	int m_iBestHomolog;
-	CAlignment m_homo_align;
-	double m_fHomologScore;
-	int m_iBestDecoy;
-	CAlignment m_decoy_align;
-	double m_fDecoyScore;
+    int m_id;
+    CSetOfSeq* m_original;
+    vector<CSetOfSeq*> m_vHomolog;
+    vector<CSetOfSeq*> m_vDecoy;
+    int m_iHomolog;
+    int m_iDecoy;
+    int m_iBestHomolog;
+    CAlignment m_homo_align;
+    double m_fHomologScore;
+    int m_iBestDecoy;
+    CAlignment m_decoy_align;
+    double m_fDecoyScore;
 };
 
 //////////////////////////////////////////////////////
@@ -29,16 +29,16 @@ class CConstraints
 {
 
 public:
-	CConstraints();
-	~CConstraints();
-	int  Init(CModel* model, int iPatternNum, double fEpsilon);
-	int Add(double* pWeight, int iPatternIndex);
-	void Clear();
-	int PrintMathProg(const char* filename);
-	int Save(const char* file);
-	int Load(const char* file);
+    CConstraints();
+    ~CConstraints();
+    int  Init(CModel* model, int iPatternNum, double fEpsilon);
+    int Add(double* pWeight, int iPatternIndex);
+    void Clear();
+    int PrintMathProg(const char* filename);
+    int Save(const char* file);
+    int Load(const char* file);
 
-	int GLPK_lp(CModel* pmodel);
+    int GLPK_lp(CModel* pmodel);
 
 public: //data
     int m_iWeightLength; //|w|
@@ -54,7 +54,7 @@ class CSample
 {
 protected:
     CSetOfSeq* LoadSoS(const  char* strSoSFile);
-	int Release();
+    int Release();
 
 
 public:
@@ -62,7 +62,7 @@ public:
     int m_nPattern;
     int m_nSetOfSeq;
     int m_iFeatureDim;
-	bool m_bBinaryData;
+    bool m_bBinaryData;
 
     vector<char*> m_vFileNames;
     vector<CSetOfSeq*> m_vSS;
@@ -100,16 +100,16 @@ public:
     int FindMostViolate(CPattern* p);
 
 public:
-	bool m_bLoadModelFromFile;
-	char* m_strModelFile;
+    bool m_bLoadModelFromFile;
+    char* m_strModelFile;
     CSample m_Sample;
     CModel m_Model;
 
 
 
-	double m_fEpsilon;
-	double m_fDistance;
-	double m_fC;
+    double m_fEpsilon;
+    double m_fDistance;
+    double m_fC;
     int m_iMaxIteration;
     int m_iMaxStep;
     int m_iMinNewConstraint;

@@ -18,7 +18,7 @@ CCmdArgInt arg_maxStep = CCmdArgInt('t', "step", "10", 10, "maximal number of st
 CCmdArgInt arg_minNewConstraint = CCmdArgInt('n', "NewConstraint", "20", 20, "minimal number of new constraints");
 CCmdArgFloat arg_C = CCmdArgFloat('c', "c", "1000", 1000, "regularization between W and slack factors, f = w + C * slack");
 CCmdArgFloat arg_e = CCmdArgFloat('e', "epsilon", "0.001", 0.001, "epsilon");
-CCmdArgBool arg_binary = CCmdArgBool('b', "binary", true, "binary file/default true");
+CCmdArgBool arg_binary = CCmdArgBool('b', "binary", false, "binary file/default true");
 CCmdArgString arg_datafile = CCmdArgString('d', "datafile", "trainsample", "trainsample", "train files");
 CCmdArgString arg_modelfile = CCmdArgString('m', "modelfile", "model", "model", "initial model file");
 CCmdArgString arg_outputfile = CCmdArgString('o', "outputfile", "outputfile", "outputfile", "output model file");
@@ -77,7 +77,7 @@ int Train()
 {
 	CStructureLearning s1;
 	//int Init(char* datafile, char* szpath, char* modelfile);
-	s1.Init(arg_datafile, arg_path, arg_modelfile, arg_binary);
+	s1.Init(arg_datafile, arg_path, arg_modelfile, (bool)arg_binary);
 	s1.m_iMaxIteration = arg_maxIteration;
 	s1.m_iMaxStep = arg_maxStep;
 	s1.m_fC = arg_C;
@@ -98,7 +98,7 @@ int Test()
 int main( int argc, char* argv[] )
 {
 
-	parser.SetVersion("---------------------------------------\nLongbin Chen, longbinc@yahoo.com, 01/29/2009");
+	parser.SetVersion("---------------------------------------\nLongbin Chen, longbinc@yahoo.com, 10/29/2009");
 	if (parser.Parse(argc,argv))
 	{
 		parser.Run();
