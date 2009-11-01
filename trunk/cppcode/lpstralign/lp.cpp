@@ -193,14 +193,14 @@ int CSample::AlignHomolog(CModel* pModel)
     {
 
         CPattern* pPattern = m_vPatterns[i];
-        double fmaxscore = -1.0;
+        double fmaxscore = 1.0e10;
         for (int j = 0; j < pPattern->m_iHomolog; j ++)
         {
             CSetOfSeq* pSS = pPattern->m_vHomolog[j];
             CAlignment align;
             double fscore = SmithWaterman_SetOfSeq(pPattern->m_original,  pSS, &align, pModel);
 //            fprintf(stderr, "(%d, %f), ", j, fscoare);
-            if (fscore > fmaxscore)
+            if (fscore < fmaxscore)
             {
                 pPattern->m_homo_align = align;
                 pPattern->m_iBestHomolog = j;
@@ -216,16 +216,16 @@ int CSample::AlignHomolog(CModel* pModel)
 }
 int CSample::AlignSamples(CModel* pModel, const char* outputfile)
 {
-        fprintf(stderr, "classifying samples ... ");
-        FILE* fp = fopen(outputfile, "w");
-        if (!fp)
-        {
+    fprintf(stderr, "classifying samples ... ");
+    FILE* fp = fopen(outputfile, "w");
+    if (!fp)
+    {
                 fprintf(stderr, "cant' write result to %s. terminated. \n", outputfile);
                 return -1;
-        }
-        int icorrect = 0;
-        for (int i = 0; i < m_nPattern; i ++)
-        {
+    }
+    int icorrect = 0;
+    for (int i = 0; i < m_nPattern; i ++)
+    {
 
                 CPattern* pPattern = m_vPatterns[i];
                 double fmaxscore = -1.0;
@@ -267,12 +267,12 @@ int CSample::AlignSamples(CModel* pModel, const char* outputfile)
                 fprintf(stderr, "\r %d of %d, %f, %f, %d correct  ", i + 1, m_nPattern, pPattern->m_fHomologScore, pPattern->m_fDecoyScore, icorrect);
                 //fprintf(fp, " %f %f\n", pPattern->m_fHomologScore, pPattern->m_fDecoyScore, icorrect);
                
-        }
-        //fprintf(fp, "%d of %d correct\n", icorrect, m_nPattern); 
-        fprintf(fp, "\n"); 
-        fprintf(stderr, "done\n");
-        fclose(fp);
-        return m_nPattern;
+    }
+    //fprintf(fp, "%d of %d correct\n", icorrect, m_nPattern); 
+    fprintf(fp, "\n"); 
+    fprintf(stderr, "done\n");
+    fclose(fp);
+    return m_nPattern;
 
 }
 
@@ -649,7 +649,6 @@ int CStructureLearning::Init(const char* datafile, const char* szpath, const cha
     
     return 1;
 }
-
 
 
 int CStructureLearning::Learn(const char* outputfile)
