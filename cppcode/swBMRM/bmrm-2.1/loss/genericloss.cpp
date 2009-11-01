@@ -60,13 +60,14 @@ void CGenericLoss::Phi1(Point p1, Point p2, Scalar* a, Scalar* b, Scalar* res)
       if (a[i] == 0 and b[i] == 0) res[i] = 0;
       else res[i] = (a[i] - b[i])*(a[i] - b[i]) / (fabs(a[i]) + fabs(b[i]));
   }
-
+/*
   for (int i = 0; i < dimOfWeight; i ++)
     if (isnan(res[i]))
     {
       printf("Entry %d of feature vector is invalid.\n", i);
       exit(0);
     }
+*/
 }
 
 void CGenericLoss::Phi(int n1, int n2, adjmatrix* matches, Scalar* res)
@@ -528,8 +529,8 @@ void CGenericLoss::AvgKLoss(Scalar& loss, TheMatrix& grad)
     else for (int j = 0; j < dimOfWeight; j ++)
     {
         lossi[i] = 0; 
-        raw_gi[i][j] = (1.0/_data->_N)*(resybar[j]-resy[j]);
-       // raw_gi[i][j] = 0; 
+       // raw_gi[i][j] = (1.0/_data->_N)*(resybar[j]-resy[j]);
+        raw_gi[i][j] = 0; 
     }
 
     printf("cost: same cls %f vs diff clas %f, loss %f = 1 + %f, %f, %f\n", samecost, mincost, lossi[i], inp, cst2, cst1);
