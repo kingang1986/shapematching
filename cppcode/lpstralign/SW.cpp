@@ -235,7 +235,7 @@ double SmithWaterman_SetOfSeq(CSetOfSeq* pSS1, CSetOfSeq* pSS2,
 
     return pASet->m_fScore;
 }
-
+/*
 double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model)
 {
     memset(phi, 0, sizeof(double) * iParamDim);
@@ -298,7 +298,6 @@ double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model)
                     DATATYPE fb = fabs(b[idx]);
                     phi[wid] += fabs(fa - fb);
                 }
-
             }
         }
         else if (pAlign->m_operation[i] == DELET || pAlign->m_operation[i] == INSRT)
@@ -340,4 +339,4 @@ double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model)
     }
     //fprintf(stderr, "%d %d\n", icount, (int)pAlign->m_operation.size());
     return fsum;
-}
+}*/

@@ -8,18 +8,30 @@
 class CPattern
 {
 public:
-    int m_id;
+    CPattern();
+    ~CPattern();
+    void Align();
+    double GetLabelLoss();
+
     CSetOfSeq* m_original;
     vector<CSetOfSeq*> m_vHomolog;
     vector<CSetOfSeq*> m_vDecoy;
+    vector<CAlignment> m_vLabelHomoAlign;
+    vector<CAlignment> m_vAligns; //first homolog and then decoy
+    vector<CAlignment*> m_vSortedAlign;
+
+    void Align(CModel* pModel);
+    void GetLabeledPhi(double*, int iParamDim,  CModel*);
+    void GetSortedPhi(double*, int iParamDim, CModel*);
+    void UpdateHomologScore(int iParamDim, CModel*);
+    void AlignHomolog(CModel* pModel);
+//    bool cmpAlign(const CAlignment*& a1, const CAlignment*& a2);
+    int m_id;
     int m_iHomolog;
     int m_iDecoy;
-    int m_iBestHomolog;
-    CAlignment m_homo_align;
-    double m_fHomologScore;
-    int m_iBestDecoy;
-    CAlignment m_decoy_align;
-    double m_fDecoyScore;
+    double GetPhiLoss(){ return 0.0;}
+    static int  m_iTopK;
+    
 };
 
 //////////////////////////////////////////////////////
@@ -77,14 +89,15 @@ public: //members
     //int AlignPatterns(CModel* pModel);
     int AlignSamples(CModel* pModel, const char* outputfile);
 
-    double AlignDecoy(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio);
+    double UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio);
     int AlignHomolog(CModel* pModel);
-    double AddConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly);
+//    double AddConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly);
 
     //active patterns
     vector<int> m_vActive;
     int SetAllActive();
     int GetActiveNum();
+    int m_iLastUpdated;
 
 };
 
@@ -97,7 +110,7 @@ public:
     int Learn(const char* );
     int Init(const char* datafile, const char* szpath, const char* modelfile, bool bBinaryData);
 
-    int FindMostViolate(CPattern* p);
+//    int FindMostViolate(CPattern* p);
 
 public:
     bool m_bLoadModelFromFile;
