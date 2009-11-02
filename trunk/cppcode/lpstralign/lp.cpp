@@ -711,6 +711,7 @@ int CStructureLearning::Learn(const char* outputfile)
     CC.Init(&m_Model, m_Sample.m_nPattern, 0.001);
     double fepsilon = 1e9;
     int iIteration = 0;
+    double falleps = 0.0;
     do
     {
         m_Sample.SetAllActive();
@@ -718,6 +719,7 @@ int CStructureLearning::Learn(const char* outputfile)
         double pre = 1e10;
         int iStep = 0;
         int iNumVio = 0;
+        falleps = 0.0;
         do
         {
             iStep ++;
@@ -725,13 +727,16 @@ int CStructureLearning::Learn(const char* outputfile)
             fprintf(stderr, "active patterns %d (out of %d)\n", m_Sample.GetActiveNum(), m_Sample.m_nPattern);
             pre = fepsilon;
             fepsilon =  m_Sample.UpdateConstraint(&CC, &m_Model, true, m_iMinNewConstraint, iNumVio);
-            CC.PrintMathProg("tmp.mod");
-            CC.GLPK_lp(&m_Model);
-            //m_Sample.UpdateHomologScore(&m_Model);
-            fprintf(stderr, "\n%d contraints, total %d violation, sum to %f \n", CC.m_vWeights.size(), iNumVio, fepsilon);
+            if (fepsilon > 0)
+            {
+                CC.PrintMathProg("tmp.mod");
+                CC.GLPK_lp(&m_Model);
+            }
+            falleps += fepsilon; 
+            fprintf(stderr, "\n%d contraints, total %d violation, sum to %f, all eps %f \n", CC.m_vWeights.size(), iNumVio, fepsilon, falleps);
         }while ((m_Sample.GetActiveNum() > 0) &&  (fepsilon > 0) && (fabs(pre - fepsilon) > 0.0001) && (iStep < m_iMaxStep) );
         iIteration ++;
-    }while ((iIteration < m_iMaxIteration) && (fepsilon > 0));
+    }while ((iIteration < m_iMaxIteration) && (falleps> 0));
     m_Model.Write(outputfile);
 
     return 1;
