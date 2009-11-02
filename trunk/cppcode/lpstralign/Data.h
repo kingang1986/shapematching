@@ -12,6 +12,11 @@ using namespace std;
 #define MAPTYPE_ABSEU 4
 #define MAPTYPE_MATCH 101
 #define MAPTYPE_GAP 102
+#define MATCH       1
+#define SUBST       2
+#define DELET       3
+#define INSRT       4
+
 
 
 
@@ -56,24 +61,7 @@ public:
     int m_iTotalPoint;
     vector<CSequence*> m_vSeqs;
     vector<int> m_vSeqLength;
-
-};
-
-class CAlignment
-{
-public:
-    CSetOfSeq* m_pSS1;
-    CSetOfSeq* m_pSS2;
-    vector<int> m_SeqIndex1;
-    vector<int> m_SeqIndex2;
-    vector<int> m_PointIndex1;
-    vector<int> m_PointIndex2;
-    vector<int> m_operation;
-    double m_fScore;
-
-    CAlignment();
-    ~CAlignment();
-    double AddAlignment(CAlignment& align);
+    int m_iClassID;
 };
 
 
@@ -115,32 +103,23 @@ public: //data
 
 };
 
-/*
-class CModel
+class CAlignment
 {
-protected:
-    void Release();
-
 public:
-    CModel();
-    ~CModel();
-    int Read(const  char* strFile);
-    int Write(const char* strFile);
-    void Init(int iParamDim, int iFeatureDim);
-    void InitTheta(int iPatternNum);
-    void Print();
+    CSetOfSeq* m_pSS1;
+    CSetOfSeq* m_pSS2;
+    vector<int> m_SeqIndex1;
+    vector<int> m_SeqIndex2;
+    vector<int> m_PointIndex1;
+    vector<int> m_PointIndex2;
+    vector<int> m_operation;
+    double m_fScore;
 
-    //data
-    int m_iPatternNum;
-    int m_iFeatureDim;
-    int m_iParamDim;
-    double* m_vWeight;
-    int* m_vSign;
-    int* m_vGapMap;
-    double* m_vTheta;
-    int* m_vMatchMap;
-    bool m_bGapExtension;
-
+    CAlignment();
+    ~CAlignment();
+    double AddAlignment(CAlignment& align);
+    double GetPhi(double* phi, int iParamDim, CModel* model);
 };
-*/
+
+
 #endif /*DATA_H_*/

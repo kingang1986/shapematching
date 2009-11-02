@@ -3,17 +3,13 @@
 #include <vector>
 #include "Data.h"
 
-#define MATCH       1
-#define SUBST       2
-#define DELET       3
-#define INSRT       4
 
 
 using namespace std;
 
 double SmithWaterman(CSetOfSeq* pSS1, CSetOfSeq* pSS2, int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
 double SmithWaterman_SetOfSeq(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model);
-double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model);
+//double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model);
 
 /* Useful structure for SW algorithm */
 class CSWNode

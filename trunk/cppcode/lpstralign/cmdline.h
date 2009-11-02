@@ -32,7 +32,7 @@ public:
 		isPOSVALREQ = (isPOS | isVALREQ),
 	};
 
-	CCmdArg(char cOptChar, char *szKeyword, char *szValue, char * szDescription, unsigned int syntax_flags)
+	CCmdArg(const char cOptChar, const char *szKeyword, const char *szValue, const char * szDescription, unsigned int syntax_flags)
 	{
 		m_cOptChar = cOptChar;
 		m_szKeyword = szKeyword;
@@ -52,9 +52,9 @@ public:
 	virtual int ValueNeeded() { return 1; }
 private:
 	char	m_cOptChar;
-	char	*m_szKeyword;
-	char	*m_szValue;
-	char	*m_szDescription;
+ const	char	*m_szKeyword;
+const	char	*m_szValue;
+const	char	*m_szDescription;
 	unsigned int m_dwSyntaxFlags;
 	bool	m_bArgAvailable;
 };
@@ -63,10 +63,10 @@ class CCmdArgInt : public CCmdArg
 {
 public:
 	CCmdArgInt(char cOptChar, 
-		       char *szKeyword, 
-			   char *szValue, 
+	const	       char *szKeyword, 
+	const		   char *szValue, 
 			   char iDefault,
-			   char* szDescription, 
+	const		   char* szDescription, 
 			   unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
 		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags), m_iValue(iDefault) {}
 	virtual ~CCmdArgInt() {}
@@ -84,11 +84,11 @@ class CCmdArgIntList : public CCmdArg
 {
 public:
 	CCmdArgIntList(char cOptChar, 
-		       char *szKeyword, 
-			   char *szValue, 
-			   int iDefault,
-			   int iIntNumber,
-			   char* szDescription, 
+		       const char *szKeyword, 
+		const 	   char *szValue, 
+		const	   int iDefault,
+		const	   int iIntNumber,
+		const	   char* szDescription, 
 			   unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
 		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags)
 	{
@@ -115,10 +115,10 @@ class CCmdArgBool: public CCmdArg
 {
 public:
 	CCmdArgBool(char cOptChar,
-				char *szKeyword,
-				bool bDefault,
-				char* szDescription, 
-				unsigned int syntax_flags = CCmdArg::isOPT)
+		const		char *szKeyword,
+		const		bool bDefault,
+		const		char* szDescription, 
+		const		unsigned int syntax_flags = CCmdArg::isOPT)
 		: CCmdArg(cOptChar, szKeyword, NULL, szDescription, syntax_flags), m_bValue(bDefault) {}
 	virtual ~CCmdArgBool() {}		
 	operator bool(void)  const { return  m_bValue; }
@@ -136,10 +136,10 @@ class CCmdArgFloat : public CCmdArg
 {
 public:
 	CCmdArgFloat(char cOptChar, 
-		         char *szKeyword, 
-				 char *szValue, 
-				 double lfDefault,
-				 char* szDescription, 
+		  const       char *szKeyword, 
+		const		 char *szValue, 
+		const		 double lfDefault,
+		const		 char* szDescription, 
 				 unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
 		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags), m_lfValue(lfDefault) {}
 	operator double(void)  const { return  m_lfValue; }
@@ -157,11 +157,11 @@ class CCmdArgFloatList : public CCmdArg
 {
 public:
 	CCmdArgFloatList(char cOptChar, 
-		       char *szKeyword, 
-			   char *szValue, 
-			   double lfDefault,
+		    const   char *szKeyword, 
+			const   char *szValue, 
+			double lfDefault,
 			   int iFloatNumber,
-			   char* szDescription, 
+			const   char* szDescription, 
 			   unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
 		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags)
 	{
@@ -188,10 +188,10 @@ class CCmdArgString : public CCmdArg
 {
 public:
 	CCmdArgString(char cOptChar, 
-		          char *szKeyword, 
-				  char *szValue, 
-				  char *szDefault,
-				  char* szDescription, 
+		         const  char *szKeyword, 
+			const	  char *szValue, 
+			const	  char *szDefault,
+			const	  char* szDescription, 
 				  unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
 		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags), m_str(szDefault) {}
 	operator const char *(void)  const { return  m_str.c_str(); }
@@ -209,11 +209,11 @@ class CCmdArgStringList : public CCmdArg
 {
 public:
 	CCmdArgStringList(char cOptChar, 
-		          char *szKeyword, 
-				  char *szValue, 
-				  char *szDefault,
+const		          char *szKeyword, 
+const				  char *szValue, 
+const				  char *szDefault,
 				  int iStringNumber,
-				  char* szDescription, 
+const				  char* szDescription, 
 				  unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
 		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags)
 	{
@@ -247,20 +247,20 @@ class CTaskItem
 {
 	std::vector<CCmdArg*> m_arrArgList;
 public:
-	char*	m_szDescription;	//e.g. "detect folder: detect the face in the whole image folder
-	char*	m_szTaskName;		//e.g. "Folder"
+	const char*	m_szDescription;	//e.g. "detect folder: detect the face in the whole image folder
+const	char*	m_szTaskName;		//e.g. "Folder"
 	int		(*m_MethodFunction)();
 	CTaskItem()
 	{
 		m_szDescription = m_szTaskName = NULL;
 	}
-	CTaskItem(char* szDescription, char* szTaskName, int (*pFun)(), int iCount, ...);
+	CTaskItem(const char* szDescription, const char* szTaskName, int (*pFun)(), int iCount, ...);
 	int Size() { return (int)m_arrArgList.size(); }
 	CCmdArg &GetAt(int i) { return *m_arrArgList[i]; }
 	CCmdArg &operator[] (int i) { return *m_arrArgList[i]; }
 };
 
-CTaskItem::CTaskItem(char* szDescription, char* szTaskName, int (*pFun)(), int iCount, ...)
+CTaskItem::CTaskItem(const char* szDescription, const char* szTaskName, int (*pFun)(), int iCount, ...)
 {
 	m_szDescription = szDescription;
 	m_szTaskName =  szTaskName;
@@ -285,9 +285,9 @@ class CParser
 public:
 	CParser() { m_iTaskIndex = -1;};
 	~CParser() {};
-	CParser(char* szProgramName, int iCount, ...);
+	CParser(const char* szProgramName, int iCount, ...);
 	bool	Parse(int argc, char* argv[]);
-	void	SetVersion(char* szVersion) 
+	void	SetVersion(const char* szVersion) 
 	{
 		strcpy(m_szVersion, szVersion);
 	}
@@ -299,11 +299,11 @@ protected:
 	int			m_iTaskIndex;
 	void		DisplayTaskDetails();
 	void		DisplayAllTask();
-	char*		szAppName;
+	const char*		szAppName;
 	char		m_szVersion[_MAX_PATH];
 };
 
-CParser::CParser(char* szProgramName, int iCount, ...)
+CParser::CParser(const char* szProgramName, int iCount, ...)
 {
 	int i = 0;
 	szAppName = szProgramName;

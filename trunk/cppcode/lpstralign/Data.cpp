@@ -316,9 +316,9 @@ int CSetOfSeq::LoadSS(const char* strFile)
                 char tmpbuffer[512];
                 char* pbuffer = tmp;
                 pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
-                int seq = atoi(tmpbuffer);
+                //int seq = atoi(tmpbuffer);
                 pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
-                int ptn = atoi(tmpbuffer);
+                //int ptn = atoi(tmpbuffer);
                 pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
                 double x = atof(tmpbuffer); 
                 pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
@@ -397,6 +397,110 @@ double CAlignment::AddAlignment(CAlignment& align)
     m_fScore += align.m_fScore;
     return m_fScore;
 
+}
+
+double CAlignment::GetPhi(double* phi, int iParamDim, CModel* model)
+{
+    memset(phi, 0, sizeof(double) * iParamDim);
+
+    int icount = 0;
+    for (int i = 0; i < (int) m_operation.size(); i++)
+    {
+
+        DATATYPE* a = m_pSS1->m_vSeqs[m_SeqIndex1[i]]->GetPoint(m_PointIndex1[i]);
+        DATATYPE* b = m_pSS2->m_vSeqs[m_SeqIndex2[i]]->GetPoint(m_PointIndex2[i]);
+        if (m_operation[i] == SUBST)
+        {
+            icount++;
+            for (int j = 0; j < model->m_iMatchCount; j++)
+            {
+
+                int t = model->m_vMatch[j];
+                int idx = model->m_vFeatureIndex[t];
+                int wid = model->m_vWeightIndex[t];
+                //fprintf(stderr, "match, %d, %d %d \n", t, idx, wid);
+                if (model->m_vMapType[t] == MAPTYPE_CONSTANT)
+                {
+                    phi[wid] += 1;
+                }
+                else if (model->m_vMapType[t] == MAPTYPE_UNCHANGE)
+                {
+                    DATATYPE fa = a[idx];
+                    DATATYPE fb = b[idx];
+                    if (fabs(fa) + fabs(fb) > 0)
+                    {
+                        DATATYPE d = fa - fb;
+                        DATATYPE f = d * d / (fabs(fa) + fabs(fb));
+                        phi[wid] += f;
+                        //fprintf(stderr, "/%f, %f/ ", model->m_vWeight[t],  d * d / (fabs(a[i]) + fabs(b[i])));
+                    }
+                }
+                else if (model->m_vMapType[t] == MAPTYPE_ABS)
+                {
+                    DATATYPE fa = fabs(a[idx]);
+                    DATATYPE fb = fabs(b[idx]);
+                    if (fa + fb > 0)
+                    {
+                        DATATYPE d = fa - fb;
+                        DATATYPE f = d * d / (fa + fb);
+                        phi[wid] += f;
+                        //fprintf(stderr, "/%f, %f/ ", model->m_vWeight[t],  d * d / (fabs(a[i]) + fabs(b[i])));
+                    }
+                }
+                else if (model->m_vMapType[t] == MAPTYPE_EU)
+                {
+                    DATATYPE fa = a[idx];
+                    DATATYPE fb = b[idx];
+                    phi[wid] += fabs(fa - fb);
+                }
+                else if (model->m_vMapType[t] == MAPTYPE_ABSEU)
+                {
+                    DATATYPE fa = fabs(a[idx]);
+                    DATATYPE fb = fabs(b[idx]);
+                    phi[wid] += fabs(fa - fb);
+                }
+
+            }
+        }
+        else if (m_operation[i] == DELET || m_operation[i] == INSRT)
+        {
+            icount++;
+            for (int j = 0; j < model->m_iGapCount; j++)
+            {
+                int t = model->m_vGap[j];
+                int idx = model->m_vFeatureIndex[t];
+                int wid = model->m_vWeightIndex[t];
+                //fprintf(stderr, "gap, %d, %d %d \n", t, idx, wid);
+                if (model->m_vMapType[t] == MAPTYPE_CONSTANT)
+                {
+                    phi[wid] += 1;
+                }
+                else if (model->m_vMapType[t] == MAPTYPE_UNCHANGE)
+                {
+                    DATATYPE fa = a[idx];
+                    DATATYPE fb = b[idx];
+                    if (m_operation[i] == DELET)
+                        phi[wid] += fabs(fa);
+                    else
+                        phi[wid] += fabs(fb);
+                }
+            }
+        }
+        else
+        {
+            fprintf(stderr, "error operation code %d at %d, %d %d %d %d\n",
+                    m_operation[i], icount, m_SeqIndex1[i],
+                    m_SeqIndex2[i], m_PointIndex1[i],
+                    m_PointIndex2[i]);
+        }
+    }
+    double fsum = 0;
+    for (int i = 0; i < iParamDim; i++)
+    {
+        fsum += model->m_vWeight[i] * phi[i];
+    }
+    //fprintf(stderr, "%d %d\n", icount, (int)m_operation.size());
+    return fsum;
 }
 
 
