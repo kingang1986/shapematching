@@ -18,7 +18,7 @@ CSample::CSample()
     strcpy(m_szFolder, ".");
     m_nShapes = 0;
     m_nPattern = 0;
-    m_iLastUpdated = 0;
+    m_iLastUpdated = -1;
 }
 
 
@@ -156,46 +156,10 @@ void CSample::UpdateHomologScore(CModel* pModel)
         CPattern* pPattern = m_vPatterns[i];
         pPattern->UpdateHomologScore(iParamDim, pModel);  
     }
+    
     return;
 }
 
-/*
-double CSample::AddConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly)
-{
-    int iParamDim = pModel->m_iParamDim;
-    double fmaxvio = 0;
-    for (int i = 0; i < m_nPattern; i ++)
-    {
-        if (bActiveOnly && m_vActive[i] == 0)
-        {
-            continue;
-        }
-        double* pw1 = new double[iParamDim];
-        double* pw2 = new double[iParamDim];
-        CPattern* pPattern = m_vPatterns[i];
-        double f1 = GetPhi(&(pPattern->m_homo_align), pw1, iParamDim, pModel);
-        double f2 = GetPhi(&(pPattern->m_decoy_align), pw2, iParamDim, pModel);
-        double vio =  f2 + pCC->m_fDistance - f1 - 0.001;
-        fprintf(stderr, "%f - %f > %f - epsilon, violoate %f\n", f1, f2, pCC->m_fDistance, vio);
-        for (int k = 0; k < iParamDim; k ++)
-        {
-            pw1[k] = pw1[k] - pw2[k];
-        }
-        if (vio > 0 )
-            fmaxvio += vio;
-
-        if (vio <= 0.0001)
-        {
-            m_vActive[i] = 0;
-        }
-        else
-        {
-            pCC->Add(pw1, i);
-        }
-    }
-    return fmaxvio;
-}
-*/
 
 int CSample::AlignHomolog(CModel* pModel)
 {
@@ -241,14 +205,16 @@ double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActive
     double fsumvio = 0.0;
     iNumVio = 0;
     double vio = 0.0;
-    for (int i = m_iLastUpdated; i < m_nPattern && iNewConstraint < iMinNewConstraint; i ++)
+    for (int i = m_iLastUpdated + 1; i < m_nPattern + m_iLastUpdated + 1 && iNewConstraint < iMinNewConstraint; i ++)
     {
-        if (bActiveOnly && m_vActive[i] == 0)
+        int ii  = i;
+        if (ii >= m_nPattern) ii -= m_nPattern;
+        if (bActiveOnly && m_vActive[ii] == 0)
             continue;
-        CPattern* pPattern = m_vPatterns[i];
+        CPattern* pPattern = m_vPatterns[ii];
         pPattern->Align(pModel);
-        //double vio = pPattern->m_fDecoyScore + pCC->m_fDistance - pPattern->m_fHomologScore - 0.001;
         double labelloss = pPattern->GetLabelLoss();
+        fprintf(stderr, " label loss %f ", labelloss); 
         if (labelloss == 0)
         {
             vio = 0;
@@ -257,17 +223,16 @@ double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActive
         {
             vio = labelloss + pPattern->GetPhiLoss();  
         }
-//        fprintf(stderr, "\rPattern %d, homolog: %3.4f, decoy: %3.4f, %3.4f ", i + 1, pPattern->m_fHomologScore, pPattern->m_fDecoyScore, pPattern->m_fHomologScore - pPattern->m_fDecoyScore);
         if (vio <= 0.0001)
         {
-            m_vActive[i] = 0;
+            m_vActive[ii] = 0;
         }
         else
         {
             int iParamDim = pModel->m_iParamDim;
             double* pw1 = new double[iParamDim];
             double* pw2 = new double[iParamDim];
-            CPattern* pPattern = m_vPatterns[i];
+            CPattern* pPattern = m_vPatterns[ii];
             pPattern->GetLabeledPhi(pw1, iParamDim, pModel);
             pPattern->GetSortedPhi(pw2, iParamDim, pModel);
             double fsum = 0, fs2 = 0;
@@ -277,17 +242,16 @@ double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActive
                 fs2 += pw2[k] * pModel->m_vWeight[k];
             }
 
-            //fprintf(stderr, "get phi ok, %f == %f ?, %f = %f?\n", fsum, pPattern->m_fHomologScore, fs2, pPattern->m_fDecoyScore);
-
             for (int k = 0; k < iParamDim; k ++)
             {
                 pw1[k] = pw1[k] - pw2[k];
             }
 
-            pCC->Add(pw1, i);
+            pCC->Add(pw1, ii);
             iNewConstraint ++;
-            fprintf(stderr, " ++\n");
-            m_iLastUpdated = i;
+            fprintf(stderr, " ++");
+            m_iLastUpdated = ii;
+            fsumvio += vio;
         }
     }
 
@@ -560,13 +524,19 @@ int CConstraints::GLPK_lp(CModel* pmodel)
 //////////////////////////////////////////////////////
 //class CPattern 
 //////////////////////////////////////////////////////
-int CPattern::m_iTopK; 
+int CPattern::m_iTopK = 3; 
 CPattern::CPattern()
 {
 }
 CPattern::~CPattern()
 {
 }
+bool cmpAlign(const CAlignment* a1, const CAlignment* a2)
+{
+    return a1->m_fScore > a2->m_fScore;
+}
+
+//align all samples accoding to the pModel
 void CPattern::Align(CModel* pModel)
 {
     m_vAligns.clear();
@@ -575,16 +545,28 @@ void CPattern::Align(CModel* pModel)
             CSetOfSeq* pSS = m_vHomolog[j];
             CAlignment align;
             SmithWaterman_SetOfSeq(m_original,  pSS, &align, pModel);
+            align.m_bSameClass = true;
             m_vAligns.push_back(align);
 
         }
         for (int j = 0; j < m_iDecoy; j ++)
         {
-            CSetOfSeq* pSS = m_vHomolog[j];
+            CSetOfSeq* pSS = m_vDecoy[j];
             CAlignment align;
             SmithWaterman_SetOfSeq(m_original,  pSS, &align, pModel);
+            align.m_bSameClass = false;
             m_vAligns.push_back(align);
         }
+    m_vSortedAlign.clear();
+    for (int i = 0; i < (int)m_vAligns.size(); i ++)
+        m_vSortedAlign.push_back(&m_vAligns[i]);
+    sort(m_vSortedAlign.begin(), m_vSortedAlign.end(), cmpAlign);
+    fprintf(stderr, "\n topk results : "); 
+    for (int i = 0; i < m_iTopK; i ++)
+    {
+        fprintf(stderr, " (%d %f)", i, m_vSortedAlign[i]->m_fScore);
+        if (m_vSortedAlign[i]->m_bSameClass) fprintf(stderr, "* ");
+    }
     return ;
 }
 void CPattern::AlignHomolog(CModel* pModel)
@@ -597,24 +579,19 @@ void CPattern::AlignHomolog(CModel* pModel)
             SmithWaterman_SetOfSeq(m_original,  pSS, &align, pModel);
             m_vLabelHomoAlign.push_back(align);
         }
+    m_vSortedLabel.clear();
+    for (int i = 0; i < (int)m_vLabelHomoAlign.size(); i ++)
+        m_vSortedLabel.push_back(&m_vLabelHomoAlign[i]);
+    sort(m_vSortedLabel.begin(), m_vSortedLabel.end(), cmpAlign);
     return ;
 }
-bool cmpAlign(const CAlignment* a1, const CAlignment* a2)
-{
-    return a1->m_fScore < a2->m_fScore;
-}
-
 double CPattern::GetLabelLoss()
 {
     //sort the aligns;
-    m_vSortedAlign.clear();
-    for (int i = 0; i < (int)m_vAligns.size(); i ++)
-        m_vSortedAlign.push_back(&m_vAligns[i]);
-    sort(m_vSortedAlign.begin(), m_vSortedAlign.end(), cmpAlign);
     double iError = 0.0;
     for (int i = 0; i < m_iTopK; i ++)
     {
-       if (m_vSortedAlign[i]->m_pSS2->m_iClassID != m_original->m_iClassID)
+       if (!m_vSortedAlign[i]->m_bSameClass)
        {
             iError += 1.0;
        }
@@ -637,11 +614,12 @@ void CPattern::GetSortedPhi(double* pw, int iParamDim, CModel* pmodel)
 
 void CPattern::GetLabeledPhi(double* pw, int iParamDim, CModel* pmodel)
 {
+    UpdateHomologScore(iParamDim, pmodel);
     memset(pw, 0, sizeof(double) * iParamDim);
     double* tmpw = new double[iParamDim];
     for (int i = 0; i < CPattern::m_iTopK; i ++)
     {
-        m_vLabelHomoAlign[i].GetPhi(tmpw, iParamDim, pmodel);
+        m_vSortedLabel[i]->GetPhi(tmpw, iParamDim, pmodel);
         for (int k = 0; k < iParamDim; k ++) 
             pw[k] += tmpw[k]; 
     }
@@ -650,7 +628,24 @@ void CPattern::GetLabeledPhi(double* pw, int iParamDim, CModel* pmodel)
 
 void CPattern::UpdateHomologScore(int iParamDim, CModel* pModel)
 {
-return;
+    double * phi = new double[iParamDim];
+    for (int i = 0; i <(int) m_vLabelHomoAlign.size(); i ++)
+    {
+        CAlignment* palign = &m_vLabelHomoAlign[i];
+        palign->GetPhi(phi, iParamDim, pModel);      
+        palign->m_fScore = 0;
+        for (int k = 0; k < iParamDim; k ++)
+           palign->m_fScore += phi[k] * pModel->m_vWeight[k];
+    }
+    m_vSortedLabel.clear();
+    for (int i = 0; i < (int)m_vLabelHomoAlign.size(); i ++)
+    m_vSortedLabel.push_back(&m_vLabelHomoAlign[i]);
+    sort(m_vSortedLabel.begin(), m_vSortedLabel.end(), cmpAlign);
+    for (int i = 0; i < m_iTopK; i ++)
+    {
+        fprintf(stderr, "%d %f ", i + 1, m_vSortedLabel[i]->m_fScore);
+    }
+    return;
 }
 //////////////////////////////////////////////////////
 //class CStructureLearning
@@ -732,7 +727,7 @@ int CStructureLearning::Learn(const char* outputfile)
             fepsilon =  m_Sample.UpdateConstraint(&CC, &m_Model, true, m_iMinNewConstraint, iNumVio);
             CC.PrintMathProg("tmp.mod");
             CC.GLPK_lp(&m_Model);
-            m_Sample.UpdateHomologScore(&m_Model);
+            //m_Sample.UpdateHomologScore(&m_Model);
             fprintf(stderr, "\n%d contraints, total %d violation, sum to %f \n", CC.m_vWeights.size(), iNumVio, fepsilon);
         }while ((m_Sample.GetActiveNum() > 0) &&  (fepsilon > 0) && (fabs(pre - fepsilon) > 0.0001) && (iStep < m_iMaxStep) );
         iIteration ++;

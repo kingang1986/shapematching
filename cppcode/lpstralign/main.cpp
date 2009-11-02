@@ -90,6 +90,7 @@ int Test()
 {
        CModel m;
        CSample sample;
+       sample.m_bBinaryData = arg_binary;
        sample.LoadSample(arg_datafile);
        m.Read(arg_modelfile);
        sample.AlignSamples(&m, arg_outputfile);

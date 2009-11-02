@@ -19,13 +19,13 @@ public:
     vector<CAlignment> m_vLabelHomoAlign;
     vector<CAlignment> m_vAligns; //first homolog and then decoy
     vector<CAlignment*> m_vSortedAlign;
+    vector<CAlignment*> m_vSortedLabel;
 
     void Align(CModel* pModel);
     void GetLabeledPhi(double*, int iParamDim,  CModel*);
     void GetSortedPhi(double*, int iParamDim, CModel*);
     void UpdateHomologScore(int iParamDim, CModel*);
     void AlignHomolog(CModel* pModel);
-//    bool cmpAlign(const CAlignment*& a1, const CAlignment*& a2);
     int m_id;
     int m_iHomolog;
     int m_iDecoy;

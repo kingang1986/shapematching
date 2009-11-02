@@ -119,6 +119,7 @@ public:
     ~CAlignment();
     double AddAlignment(CAlignment& align);
     double GetPhi(double* phi, int iParamDim, CModel* model);
+    bool m_bSameClass;
 };
 
 
