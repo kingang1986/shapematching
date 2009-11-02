@@ -14,6 +14,7 @@ int Convert();
 int Convert2();
 
 CCmdArgInt arg_maxIteration = CCmdArgInt('i', "iteration", "20", 20, "maximal number of iteration");
+CCmdArgInt arg_knn = CCmdArgInt('i', "knn", "3", 3, "K of the KNN, default 3");
 CCmdArgInt arg_maxStep = CCmdArgInt('t', "step", "10", 10, "maximal number of step in each iteration");
 CCmdArgInt arg_minNewConstraint = CCmdArgInt('n', "NewConstraint", "20", 20, "minimal number of new constraints");
 CCmdArgFloat arg_C = CCmdArgFloat('c', "c", "1000", 1000, "regularization between W and slack factors, f = w + C * slack");
@@ -75,6 +76,7 @@ int Convert2()
 }
 int Train()
 {
+    CPattern::m_iTopK = arg_knn;
 	CStructureLearning s1;
 	//int Init(char* datafile, char* szpath, char* modelfile);
 	s1.Init(arg_datafile, arg_path, arg_modelfile, (bool)arg_binary);
@@ -88,6 +90,7 @@ int Train()
 }
 int Test()
 {
+    CPattern::m_iTopK = arg_knn;
        CModel m;
        CSample sample;
        sample.m_bBinaryData = arg_binary;
