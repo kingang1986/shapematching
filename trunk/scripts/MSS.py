@@ -6,6 +6,8 @@
 '''
 
 import sys, math, string, optparse, fileinput, cStringIO, random
+from opencv import cv
+from opencv import highgui
 
 
 class myPoint:
@@ -24,6 +26,8 @@ class myPoint:
 
     def addvalue(self, name, value):
          self.__dict__[name] = value
+    def getCvPoint(self):
+        return cv.cvPoint(int(self.x), int(self.y))
 
 class Sequence:
     def __init__(self):
@@ -31,8 +35,16 @@ class Sequence:
         
     def addPoint(self, newpt):
         self.points.append(newpt)
+
     def __getitem__(self, k):
         return self.points[k]
+
+    def paint(self, img):
+        for p in self.points:
+            cv.cvDrawCircle(img, p.getCvPoint(), 2, cv.cvScalar(0, 0, 255,0))
+        for i in range(len(self.points) - 1):
+            cv.cvLine(img, self.points[i].getCvPoint(), self.points[i + 1].getCvPoint(), cv.cvScalar(255,255,255,0), 1)
+ 
         
 class MSS:
     def __init__(self):
@@ -76,7 +88,14 @@ class MSS:
                 res.append(f)
         return res
 
+    def paint(self, img): # draw MSS on img
+        for s in self.seqs:
+            s.paint(img)
+        
+
     def save(self, filename):
+        if len(self.seqs) == 0: return
+        if len(self.seqs[0].points) == 0: return
         res = self.seqs[0].points[0].getvalues().keys()
         res.sort()
         self.featname = [f for f in res if f.startswith("f") and f not in ['seq', 'pnt', 'x', 'y']]

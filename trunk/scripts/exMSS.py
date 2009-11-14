@@ -39,6 +39,7 @@ class ExtractMSS:
         self.allcurve = []
         idx = 0
         for c in cont.hrange():
+            print c.total
             PointArray = cv.cvCreateMat(1, c.total  , cv.CV_32SC2)
             PointArray2D32f= cv.cvCreateMat( 1, c.total  , cv.CV_32FC2)
             cv.cvCvtSeqToArray(c, PointArray, cv.cvSlice(0, cv.CV_WHOLE_SEQ_END_INDEX))
@@ -78,7 +79,8 @@ class ExtractMSS:
                 #print int((i + 1) / ndist), int(i/ ndist)
                 if (int((i + 1) / ndist) - int(i / ndist)) == 1:
                     seq.points.append(p)
-            self.mss.seqs.append(seq)
+            if (len(seq.points) > 0):
+                self.mss.seqs.append(seq)
 
     def GetContour(self, fname, options):
           self.bDrawNumber = options.drawnumber

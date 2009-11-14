@@ -1,4 +1,4 @@
-#!/bin/python 
+#!/usr/bin/env python 
 """SWMatch - a Python class
 """
 

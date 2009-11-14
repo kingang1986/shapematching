@@ -46,9 +46,9 @@ class Linker:
         for i in range(80, 200, 20):
             bimg = cv.cvCloneImage(greyimg) 
             cv.cvSmooth(bimg, bimg, cv.CV_MEDIAN, 9)
-            cv.cvSmooth(bimg, bimg, cv.CV_BILATERAL, 9)
-            cv.cvSmooth(bimg, bimg, cv.CV_BLUR, 9)
-            cv.cvSmooth(bimg, bimg, cv.CV_BLUR, 9)
+#            cv.cvSmooth(bimg, bimg, cv.CV_BILATERAL, 9)
+#            cv.cvSmooth(bimg, bimg, cv.CV_BLUR, 9)
+#            cv.cvSmooth(bimg, bimg, cv.CV_BLUR, 9)
             cv.cvThreshold(greyimg, bimg, i, 255, cv.CV_THRESH_BINARY)
             self.__findcurve(bimg)
         
@@ -138,7 +138,7 @@ class Linker:
                 cumulate += 1
                 for kk in range(len(self.points)):
                      k = self.points[kk]
-                     if (abs(c.x - k.x) + abs(c.y - k.y) < 10):
+                     if (abs(c.x - k.x) + abs(c.y - k.y) < 15):
                           if (currentPoint != k or cumulate > 40):
                               state += 1
                               currentPoint = k
@@ -167,7 +167,7 @@ class Linker:
                          #print  "%d\t%3.2f\t%3.2f\t%d\t%d\t%d" % (kkk, s.x, s.y, cnt, pointseq[t - 1], pointseq[t])
                 e.end = showpt[-1][2]
         print >> OUT, "seq\tptn\tx\ty\t" 
-        self.__edgededup()
+#        self.__edgededup()
         self.__evenSample(self.npoints)
         for ie, e in enumerate(self.edges):
             print  "P(%d) <-> P(%d) length %d, selected %d" % (e.start, e.end, len(e.points), len(e.selected))
@@ -177,8 +177,8 @@ class Linker:
                 cv.cvDrawCircle(self.drawimg, p, 2, cv.cvScalar(255,255,0,0))
                 print >> OUT, "%d\t%d\t%d\t%d" % (ie, ip, p.x, p.y) 
                
-            for id in range(1, len(e.selected)):
-                cv.cvLine(self.drawimg, e.selected[id-1], e.selected[id], cv.CV_RGB(255,0,0))
+#            for id in range(1, len(e.selected)):
+#                cv.cvLine(self.drawimg, e.selected[id-1], e.selected[id], cv.CV_RGB(255,0,0))
             #highgui.cvShowImage ("Corner1", self.drawimg)
             #highgui.cvWaitKey (0)
 
@@ -201,13 +201,31 @@ class Linker:
         highgui.cvSaveImage(filename, self.drawimg)
 
 
-    def LinkPoints(self, fname, ptfile):
+    def LinkPoints(self, fname):
         self.__findedge(fname)
-        self.__loadPoints(ptfile)
         self.DrawKeyPoints()
         self.__link()
+
+    def HarrisPoints(self, imgfile):
+        self.points = []
+        self.drawimg = highgui.cvLoadImage (imgfile)
+        c = 1
+        try:
+            gray = cv.cvCreateImage (cv.cvGetSize (self.drawimg), 8, 1)
+            cv.cvCvtColor(self.drawimg, gray, cv.CV_BGR2GRAY)
+            eig = cv.cvCreateImage (cv.cvGetSize (self.drawimg), 32, 1)
+            tmpimg = cv.cvCreateImage (cv.cvGetSize (self.drawimg), 32, 1)
+            p =   cv.cvGoodFeaturesToTrack(gray, eig, tmpimg, 100, 0.1, 20, None, 7, 1, 0.04 )
+            for x in p:
+                 cv.cvCircle( self.drawimg, x, 3, cv.CV_RGB(0,255,0), 8, 0 );
+                 self.points.append(x)
+
+        except Exception,e:
+            print e
+            print 'ERROR: problem handling '+ imgfile 
+ 
     
-    def __loadPoints(self, ptfile):
+    def LoadPoints(self, ptfile):
         self.points = []
         for line in fileinput.input(ptfile):
             dr = line.strip("\n").strip("\r").split(" ")
@@ -231,7 +249,7 @@ class Linker:
     
     
 def main():
-    usage = "%s [options]  <imgfile> <pointfile>" % (sys.argv[0])
+    usage = "%s [options]  <imgfile> " % (sys.argv[0])
     version = "%prog 0.2\n Longbin Chen, longbinc@yahoo.com"
     oparser = optparse.OptionParser(usage=usage, version=version)
     oparser.add_option('-d', '--display', action="store_true", dest = 'display', default = False, help = 'display the image')
@@ -240,18 +258,28 @@ def main():
     oparser.add_option('-n', '--number', dest = 'num', type='int', default = 200 , help = 'the number of feature points')
     oparser.add_option('-x','--enlarge', dest = 'enlarge', default = 1.0 , type = float,  help = 'resize images, default:1.0')
     oparser.add_option('-o', '--output', dest = 'output', default = None, help = 'output file')
+    oparser.add_option('-p', '--pointfile', dest = 'pointfile', default = None, help = 'use pointfile ')
+    oparser.add_option('-r', '--harris', dest = 'harris', default = False, action = "store_true", help = 'use harris detector')
     oparser.add_option('-s', '--save', dest = 'save', default = None, help = 'save the img file')
+    
 
     (options, args) = oparser.parse_args(sys.argv)
 
-    if len(args) != 3:
+    if len(args) != 2:
         oparser.parse_args([sys.argv[0], "--help"])
+        sys.exit(1)
+    if (options.pointfile == None and options.harris == None): 
+        print >> sys.stderr, "either of  pointfile and harris can be valid"
         sys.exit(1)
 
     highgui.cvNamedWindow ("Corner1", 1)
     ct = Linker(options.contour, options.image, options.enlarge, options.num)
-   
-    ct.LinkPoints(args[1], args[2])
+    if (options.pointfile): 
+        ct.LoadPoints(options.pointfile)
+        ct.LinkPoints(args[1])
+    else:
+        ct.HarrisPoints(args[1])
+        ct.LinkPoints(args[1])
     highgui.cvShowImage ("Corner1", ct.drawimg)
     highgui.cvWaitKey (0)   
     if (options.save):
