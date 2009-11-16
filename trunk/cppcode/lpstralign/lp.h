@@ -21,15 +21,14 @@ public:
     vector<CAlignment*> m_vSortedAlign;
     vector<CAlignment*> m_vSortedLabel;
 
-    void Align(CModel* pModel);
-    void GetLabeledPhi(double*, int iParamDim,  CModel*);
-    void GetSortedPhi(double*, int iParamDim, CModel*);
+    double Align(CModel* pModel);
+    double GetLabeledPhi(double*, int iParamDim,  CModel*);
+    void GetDecoyPhi(double*, int iParamDim, CModel*);
     void UpdateHomologScore(int iParamDim, CModel*);
     void AlignHomolog(CModel* pModel);
     int m_id;
     int m_iHomolog;
     int m_iDecoy;
-    double GetPhiLoss(){ return 0.0;}
     static int  m_iTopK;
     
 };
@@ -44,7 +43,7 @@ public:
     CConstraints();
     ~CConstraints();
     int  Init(CModel* model, int iPatternNum, double fEpsilon);
-    int Add(double* pWeight, int iPatternIndex);
+    int Add(double* pWeight, int iPatternIndex, double loss);
     void Clear();
     int PrintMathProg(const char* filename);
     int Save(const char* file);
@@ -57,6 +56,7 @@ public: //data
     int m_iPatternNum;// |epsilon|
     vector<double*> m_vWeights;
     vector<int> m_vPatternIndex;
+    vector<double> m_vLoss;
 
     double m_fEpsilon, m_fC, m_fDistance;
 
@@ -80,7 +80,7 @@ public:
     vector<CSetOfSeq*> m_vSS;
     vector<CPattern*> m_vPatterns;
     char m_szFolder[500];
-    void UpdateHomologScore(CModel* pModel);
+//    void UpdateHomologScore(CModel* pModel);
 
 public: //members
     CSample();

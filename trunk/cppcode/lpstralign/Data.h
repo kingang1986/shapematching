@@ -3,6 +3,7 @@
 #include <vector>
 #include "math.h"
 using namespace std;
+
 #define DATATYPE float
 
 #define MAPTYPE_CONSTANT 0
@@ -73,20 +74,25 @@ public:
     CModel();
     ~CModel();
 
-public: //data
+public: 
     int Read(const  char* strFile);
     int Write(const char* strFile);
     void Init(int iParamDim);
     void InitTheta(int iPatternNum);
     void Print();
 
-    //data
+    // info about training 
     int m_iPatternNum;
-    int m_iFeatureDim;
-    int m_iParamDim;
+
+    //features
+    int m_iFeatureDim; // the number of features
+//    vector<string> m_vFeatureName;
+
+    //weights i.e. theta
+    int m_iParamDim; // the number of Params, i.e., the length of weights
     int* m_vFeatureIndex;
     int* m_vWeightIndex;
-    int* m_vMapType;
+    int* m_vMapType; // the method to calculate similarity measurement 
     int* m_vMatchOrGap; //MAPTYPE_MATCH or MAPTYPE_GAP
 
     //
@@ -99,7 +105,7 @@ public: //data
     //model weights
     int m_iMapNum;
     double* m_vWeight;
-    int* m_vSign;
+    int* m_vSign; // the constraints for the weights
 
 };
 

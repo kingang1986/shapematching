@@ -14,7 +14,7 @@ int Convert();
 int Convert2();
 
 CCmdArgInt arg_maxIteration = CCmdArgInt('i', "iteration", "20", 20, "maximal number of iteration");
-CCmdArgInt arg_knn = CCmdArgInt('i', "knn", "3", 3, "K of the KNN, default 3");
+CCmdArgInt arg_knn = CCmdArgInt('k', "knn", "3", 3, "K of the KNN, default 3");
 CCmdArgInt arg_maxStep = CCmdArgInt('t', "step", "10", 10, "maximal number of step in each iteration");
 CCmdArgInt arg_minNewConstraint = CCmdArgInt('n', "NewConstraint", "20", 20, "minimal number of new constraints");
 CCmdArgFloat arg_C = CCmdArgFloat('c', "c", "1000", 1000, "regularization between W and slack factors, f = w + C * slack");
@@ -32,6 +32,7 @@ CTaskItem itm_train = CTaskItem( "build models using structural linear programmi
 	&arg_modelfile,
 	&arg_path,
 	&arg_maxIteration,
+        &arg_knn,
 	&arg_maxStep,
 	&arg_C,
 	&arg_e,
@@ -42,6 +43,7 @@ CTaskItem itm_test = CTaskItem( "test models using structural linear programming
         "test", Test, 5,
         &arg_datafile,
         &arg_modelfile,
+        &arg_knn,
         &arg_path,
         &arg_outputfile,
         &arg_binary);
@@ -90,7 +92,7 @@ int Train()
 }
 int Test()
 {
-    CPattern::m_iTopK = arg_knn;
+       CPattern::m_iTopK = arg_knn;
        CModel m;
        CSample sample;
        sample.m_bBinaryData = arg_binary;
