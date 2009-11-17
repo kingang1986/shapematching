@@ -544,9 +544,10 @@ double CPattern::Align(CModel* pModel)
     m_vAligns.clear();
     for (int j = 0; j < m_iHomolog; j ++)
     {
+        CSWMatch * pMatch = new CSWMatch();
         CSetOfSeq* pSS = m_vHomolog[j];
         CAlignment align;
-        SmithWaterman_SetOfSeq(m_original,  pSS, &align, pModel);
+        pMatch->Match(m_original, pSS, &align, pModel);
         align.m_bSameClass = true;
         m_vAligns.push_back(align);
 
@@ -555,7 +556,8 @@ double CPattern::Align(CModel* pModel)
     {
         CSetOfSeq* pSS = m_vDecoy[j];
         CAlignment align;
-        SmithWaterman_SetOfSeq(m_original,  pSS, &align, pModel);
+        CSWMatch* pMatch = new CSWMatch();
+        pMatch->Match(m_original,  pSS, &align, pModel);
         align.m_fScore += 0.00001;
         align.m_bSameClass = false;
         m_vAligns.push_back(align);
@@ -586,8 +588,9 @@ void CPattern::AlignHomolog(CModel* pModel)
     for (int j = 0; j < m_iHomolog; j ++)
     {
         CSetOfSeq* pSS = m_vHomolog[j];
+        CSWMatch* pMatch = new CSWMatch();
         CAlignment align;
-        SmithWaterman_SetOfSeq(m_original,  pSS, &align, pModel);
+        pMatch->Match(m_original,  pSS, &align, pModel);
         m_vLabelHomoAlign.push_back(align);
     }
     m_vSortedLabel.clear();

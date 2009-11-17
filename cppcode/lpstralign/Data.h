@@ -32,13 +32,17 @@ public:
     CSequence();
     ~CSequence();
     int Allocate(int nPoint, int nFeatureDim);
+    void Release();
+    void SetPointValue(int iPoint, DATATYPE* vFeature);
     DATATYPE* GetPoint(int iIndex);
     int m_iFeatureDim;
     int m_iPoint;
     DATATYPE** m_vFeature;
     DATATYPE* m_vX;
     DATATYPE* m_vY;
-    void Release();
+
+    int m_iID;
+     
 
 };
 
@@ -55,14 +59,25 @@ public:
 
     int CheckSeq(const char* strFile);
     void Print();
+    void Update();
     void Release();
+    int SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2);
+    int RemoveShortSeqs(int iMinLen);
+
+protected:
+    int m_iSeqIds;
+
 //Data
+public:    
     int m_iSeqNum;
     int m_iFeatureDim;
     int m_iTotalPoint;
     vector<CSequence*> m_vSeqs;
     vector<int> m_vSeqLength;
     int m_iClassID;
+    
+
+    
 };
 
 
@@ -125,6 +140,7 @@ public:
     ~CAlignment();
     double AddAlignment(CAlignment& align);
     double GetPhi(double* phi, int iParamDim, CModel* model);
+    void GetBound(int& start1, int& end1, int& start2, int& end2);
     bool m_bSameClass;
 };
 

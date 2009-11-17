@@ -1,4 +1,4 @@
-# include "Data.h"
+#include "Data.h"
 #include <cstdlib>
 #include <string.h>
 #include <stdio.h>
@@ -119,6 +119,7 @@ int CSequence::Allocate(int nPoint, int nFeatureDim)
     Release();
     m_iFeatureDim = nFeatureDim;
     m_iPoint = nPoint;
+    printf("%d ", nPoint);
     m_vFeature = new DATATYPE*[nPoint];
     m_vX = new DATATYPE[nPoint];
     m_vY = new DATATYPE[nPoint];
@@ -129,6 +130,12 @@ int CSequence::Allocate(int nPoint, int nFeatureDim)
     }
     return nPoint * nFeatureDim;
 
+}
+
+void CSequence::SetPointValue(int iPoint, DATATYPE* vFeature)
+{
+    memcpy(m_vFeature[iPoint], vFeature, sizeof(DATATYPE) * m_iFeatureDim);
+    return ;
 }
 
 DATATYPE* CSequence::GetPoint(int iIndex)
@@ -143,6 +150,7 @@ CSetOfSeq::CSetOfSeq()
 {
     m_iSeqNum = 0;
     m_iTotalPoint = 0;
+    m_iSeqIds = 1001;
 }
 void CSetOfSeq::Release()
 {
@@ -163,6 +171,8 @@ CSetOfSeq::~CSetOfSeq()
 
 int CSetOfSeq::AddSequence(CSequence* pSeq)
 {
+    pSeq->m_iID = m_iSeqIds; 
+    m_iSeqIds ++;
     m_vSeqs.push_back(pSeq);
     m_iSeqNum ++;
     m_iTotalPoint += (int)(pSeq->m_iPoint);
@@ -218,9 +228,24 @@ int CSetOfSeq::CheckSeq(const char* file)
    m_iSeqNum = (int)m_vSeqLength.size();
 //   for (int k = 0; k < m_vSeqLength.size(); k ++)
 //       fprintf(stderr, "%d of %d, feat len %d\n", k, m_vSeqLength.size(), m_iFeatureDim);
+   Update();
    return (int)m_vSeqLength.size();
 }
 
+int CSetOfSeq::RemoveShortSeqs(int iMinLen)
+{
+    vector<CSequence*>::iterator iter = m_vSeqs.begin();
+    while( iter != m_vSeqs.end() )
+    {
+      if ((*iter)->m_iPoint < iMinLen)
+        iter = m_vSeqs.erase( iter );
+      else
+        ++iter;
+    }
+    Update();
+    return m_iSeqNum;
+
+}
 
 int CSetOfSeq::LoadSSBinary(const char* strFile)
 {
@@ -255,8 +280,9 @@ int CSetOfSeq::LoadSSBinary(const char* strFile)
         m_vSeqs.push_back(pSeq);
 
     }
-      fclose(f);
-     return 1;
+    fclose(f);
+    Update();
+    return 1;
 
 }
 int CSetOfSeq::SaveSSBinary(const char* strFile)
@@ -363,6 +389,50 @@ void CSetOfSeq::Print()
 
 }
 
+
+void CSetOfSeq::Update()
+{
+    m_iSeqNum = (int) m_vSeqs.size();
+    m_iTotalPoint = 0;
+    for (int i = 0; i < (int)m_vSeqs.size(); i ++)
+    {
+       m_iTotalPoint += m_vSeqs[i]->m_iPoint; 
+    }
+    return; 
+}
+
+int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
+{
+    CSequence* pSeq = m_vSeqs[iSeqIndex];
+    int iLen = pSeq->m_iPoint;
+    if (iSplitPos1 > 0)
+    {
+        CSequence* pSeq1 = new CSequence();
+        pSeq1->Allocate(iSplitPos1, m_iFeatureDim);
+        for (int i = 0; i < iSplitPos1; i ++)
+        {
+            pSeq1->SetPointValue(i, m_vSeqs[iSeqIndex]->GetPoint(i));
+        }
+        AddSequence(pSeq1);
+        
+    } 
+    if (iSplitPos2 < iLen - 1)
+    {
+        CSequence* pSeq2 = new CSequence();
+    
+        pSeq2->Allocate(iLen - iSplitPos2 - 1, m_iFeatureDim);
+        for (int i = iSplitPos2 + 1; i < iLen; i ++)
+        {
+             pSeq2->SetPointValue(i - iSplitPos2 - 1, m_vSeqs[iSeqIndex]->GetPoint(i));
+        }
+        AddSequence(pSeq2);
+    }
+    m_vSeqs.erase(m_vSeqs.begin() + iSeqIndex);
+    delete  pSeq;
+    Update();
+    return m_iSeqNum; 
+ 
+}
 /////////////////////////////////////////////////////////
 //class CAlignment
 /////////////////////////////////////////////////////////
@@ -503,6 +573,25 @@ double CAlignment::GetPhi(double* phi, int iParamDim, CModel* model)
     return fsum;
 }
 
+void CAlignment::GetBound(int& start1, int& end1, int& start2, int& end2)
+{
+/*    for (int i = 0; i < (int)m_PointIndex1.size(); i ++)
+    {
+        printf("%d ", m_PointIndex1[i]);
+    }
+    printf("\n");
+
+    for (int i = 0; i < (int)m_PointIndex2.size(); i ++)
+    {
+        printf("%d ", m_PointIndex2[i]);
+    }
+    printf("\n");
+*/
+    end1    = m_PointIndex1[0];
+    start1  = m_PointIndex1[m_PointIndex1.size() - 1];
+    end2 = m_PointIndex2[0];
+    start2  =  m_PointIndex2[m_PointIndex2.size() - 1]; 
+}
 
 /////////////////////////////////////////////////////////////
 //class CModel
