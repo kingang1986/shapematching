@@ -4,7 +4,9 @@
 #include <memory.h>
 #include <stdlib.h>
 
-double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model)
+using namespace std;
+
+double CSWMatch::getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model)
 {
     double cost = 0;
     for (int i = 0; i < model->m_iMatchCount; i++)
@@ -58,7 +60,7 @@ double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model)
     return cost;
 }
 
-double getGapCost(DATATYPE* a, CModel* model)
+double CSWMatch::getGapCost(DATATYPE* a, CModel* model)
 {
     //fprintf(stderr, "cal gap cost\n");
     double cost = 0;
@@ -87,9 +89,7 @@ double getGapCost(DATATYPE* a, CModel* model)
     // return f; //debug
 }
 
-double SmithWaterman(CSetOfSeq* pSS1, CSetOfSeq* pSS2, int iSSIndex1,
-        int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign,
-        CModel* model)
+double CSWMatch::Match(int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
 {
 
     //allocate nodes
@@ -198,6 +198,74 @@ double SmithWaterman(CSetOfSeq* pSS1, CSetOfSeq* pSS2, int iSSIndex1,
 
 }
 
+void CSWMatch::UpdateMatching()
+{
+    for (int i = 0; i < m_pSS1->m_iSeqNum; i ++)
+    {
+        CSequence* pS1 = m_pSS1->m_vSeqs[i];
+        for (int j = 0; j < m_pSS2->m_iSeqNum; j ++)  
+        {
+            CSequence* pS2 = m_pSS2->m_vSeqs[j];
+            CAlignment* pAlign = new CAlignment();
+            pAlign->m_pSS1 = m_pSS1;
+            pAlign->m_pSS2 = m_pSS2;
+            pair<int, int> p ;
+            
+            //std::pair<int, int> p = pair(pS1->m_iID, pS2->m_iID);
+            if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
+            {
+                Match(i, j, pS1, pS2, pAlign, m_model);
+                m_mapCachedMatching[p] = pAlign;
+            }
+        }
+    }  
+    return; 
+}
+
+double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model)
+{
+    m_pSS1 = pSS1;
+    m_pSS2 = pSS2;
+    m_model = model;
+
+    pSS1->RemoveShortSeqs(3);
+    pSS2->RemoveShortSeqs(3);
+
+    UpdateMatching();
+    double fTotalScore = 0;
+    while (m_pSS1->m_iSeqNum > 0 && m_pSS2->m_iSeqNum > 0)
+    {
+        double fMaxScore = -1;
+        int bestP1 = 0, bestP2 = 0;
+        CAlignment* pBestAlign = NULL;
+        std::map<pair<int, int>, CAlignment*>::iterator itr; 
+        for(itr = m_mapCachedMatching.begin(); itr != m_mapCachedMatching.end(); ++itr)
+        {
+             CAlignment* pAlign =(CAlignment*) (*itr).second;
+             if (pAlign->m_fScore > fMaxScore) 
+             {
+                 fMaxScore = pAlign->m_fScore;
+                 bestP1 = (*itr).first.first;
+                 bestP2 = (*itr).first.second;
+                 pBestAlign = pAlign;
+             }
+        }
+      
+        pASet->AddAlignment(*pBestAlign);
+        fTotalScore += fMaxScore;
+        int start1, end1, start2, end2; 
+        pBestAlign->GetBound(start1, end1, start2, end2);
+//        fprintf(stderr, "Matching %d seqs with %d seqs, best seqs %d [%d, %d], seqs %d [%d: %d]\n", pSS1->m_iSeqNum, pSS2->m_iSeqNum, bestP1, start1, end1, bestP2, start2, end2);
+        pSS1->SplitSeq(bestP1, start1, end1); 
+        pSS2->SplitSeq(bestP2, start2, end2); 
+        pSS1->RemoveShortSeqs(3);
+        pSS2->RemoveShortSeqs(3);
+        UpdateMatching();
+    }
+ //   fprintf(stderr, "%d %d %f ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, fTotalScore);
+    return fTotalScore; 
+}
+/*
 double SmithWaterman_SetOfSeq(CSetOfSeq* pSS1, CSetOfSeq* pSS2,
         CAlignment* pASet, CModel* model)
 {
@@ -235,7 +303,6 @@ double SmithWaterman_SetOfSeq(CSetOfSeq* pSS1, CSetOfSeq* pSS2,
 
     return pASet->m_fScore;
 }
-/*
 double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model)
 {
     memset(phi, 0, sizeof(double) * iParamDim);
