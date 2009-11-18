@@ -34,7 +34,8 @@ public:
     ~CSWMatch();
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel);
     
-    double Match(int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
+    //double Match(int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
+    double Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
 //    double Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
 protected:
     double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model);

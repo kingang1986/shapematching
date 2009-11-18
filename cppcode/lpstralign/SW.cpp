@@ -89,7 +89,7 @@ double CSWMatch::getGapCost(DATATYPE* a, CModel* model)
     // return f; //debug
 }
 
-double CSWMatch::Match(int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
+double CSWMatch::Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
 {
 
     //allocate nodes
@@ -177,11 +177,11 @@ double CSWMatch::Match(int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence
     int oper_count = 0;
     while (temp_node->prev)
     {
-        //fprintf(stderr, "oper %d %d\n", oper_count, temp_node->operation);
-        pAlign->m_SeqIndex1.push_back(iSSIndex1);
-        pAlign->m_SeqIndex2.push_back(iSSIndex2);
-        pAlign->m_PointIndex1.push_back(temp_node->prev->row_index);
-        pAlign->m_PointIndex2.push_back(temp_node->prev->column_index);
+//        fprintf(stderr, "oper (%d %d, %d), (%d, %d)\n",  pSeqA->m_iOriginalSeqId, temp_node->prev->row_index , pSeqA->m_iStartPos, pSeqB->m_iOriginalSeqId, temp_node->prev->column_index + pSeqB->m_iStartPos);
+        pAlign->m_SeqIndex1.push_back(pSeqA->m_iOriginalSeqId);
+        pAlign->m_SeqIndex2.push_back(pSeqB->m_iOriginalSeqId);
+        pAlign->m_PointIndex1.push_back(temp_node->prev->row_index + pSeqA->m_iStartPos);
+        pAlign->m_PointIndex2.push_back(temp_node->prev->column_index + pSeqB->m_iStartPos);
         pAlign->m_operation.push_back(temp_node->operation);
         oper_count++;
         temp_node = temp_node->prev;
@@ -210,11 +210,11 @@ void CSWMatch::UpdateMatching()
             pAlign->m_pSS1 = m_pSS1;
             pAlign->m_pSS2 = m_pSS2;
             pair<int, int> p ;
-            
-            //std::pair<int, int> p = pair(pS1->m_iID, pS2->m_iID);
+            p.first = pS1->m_iID;
+            p.second = pS2->m_iID;
             if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
             {
-                Match(i, j, pS1, pS2, pAlign, m_model);
+                Match(pS1, pS2, pAlign, m_model);
                 m_mapCachedMatching[p] = pAlign;
             }
         }
@@ -228,11 +228,12 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     m_pSS2 = new CSetOfSeq(*pSS2);
     m_model = model;
 
-    pSS1->RemoveShortSeqs(3);
-    pSS2->RemoveShortSeqs(3);
+    m_pSS1->RemoveShortSeqs(3);
+    m_pSS2->RemoveShortSeqs(3);
 
     UpdateMatching();
     double fTotalScore = 0;
+//    fprintf(stderr, "matching %s and %s \n", pSS1->m_strFileName.c_str(), pSS2->m_strFileName.c_str()); 
     while (m_pSS1->m_iSeqNum > 0 && m_pSS2->m_iSeqNum > 0)
     {
         double fMaxScore = -1;
@@ -245,21 +246,19 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
              if (pAlign->m_fScore > fMaxScore) 
              {
                  fMaxScore = pAlign->m_fScore;
-                 bestP1 = (*itr).first.first;
+                 bestP1 = (*itr).first.first; 
                  bestP2 = (*itr).first.second;
                  pBestAlign = pAlign;
              }
         }
-      
         pASet->AddAlignment(*pBestAlign);
         fTotalScore += fMaxScore;
         int start1, end1, start2, end2; 
         pBestAlign->GetBound(start1, end1, start2, end2);
-//        fprintf(stderr, "Matching %d seqs with %d seqs, best seqs %d [%d, %d], seqs %d [%d: %d]\n", pSS1->m_iSeqNum, pSS2->m_iSeqNum, bestP1, start1, end1, bestP2, start2, end2);
-        pSS1->SplitSeq(bestP1, start1, end1); 
-        pSS2->SplitSeq(bestP2, start2, end2); 
-        pSS1->RemoveShortSeqs(3);
-        pSS2->RemoveShortSeqs(3);
+        m_pSS1->SplitSeqByID(bestP1, start1, end1); 
+        m_pSS2->SplitSeqByID(bestP2, start2, end2); 
+        m_pSS1->RemoveShortSeqs(3);
+        m_pSS2->RemoveShortSeqs(3);
         UpdateMatching();
     }
  //   fprintf(stderr, "%d %d %f ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, fTotalScore);
@@ -267,145 +266,3 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     delete m_pSS2;
     return fTotalScore; 
 }
-/*
-double SmithWaterman_SetOfSeq(CSetOfSeq* pSS1, CSetOfSeq* pSS2,
-        CAlignment* pASet, CModel* model)
-{
-    CAlignment best;
-    //fprintf(stderr, "%d %d\n", pSS1->m_iSeqNum, pSS2->m_iSeqNum);
-    for (int i = 0; i < pSS1->m_iSeqNum; i++)
-    {
-        double maxf = -1;
-        int maxind = -1;
-        CSequence* pS1 = pSS1->m_vSeqs[i];
-        for (int j = 0; j < pSS2->m_iSeqNum; j++)
-        {
-            CSequence* pS2 = pSS2->m_vSeqs[j];
-            CAlignment align;
-            align.m_pSS1 = pSS1;
-            align.m_pSS2 = pSS2;
-            //fprintf(stderr, "ssok 1 %d %d\n", i, j);
-            SmithWaterman(pSS1, pSS2, i, j, pS1, pS2, &align, model);
-            //fprintf(stderr, "ssok 2\n");
-            //fprintf(stderr, "align (%d) to seq (%d), score %f, length %d\n", i, j, align.m_fScore, (int)align.m_operation.size());
-            //fprintf(stderr, "\rscore %f, length %d", align.m_fScore, (int)align.m_operation.size());
-            if (align.m_fScore > maxf)
-            {
-                maxf = align.m_fScore;
-                maxind = j;
-                best = align;
-                //fprintf(stderr, "ok j%d\n", j);
-            }
-        }
-        pASet->AddAlignment(best);
-        //fprintf(stderr, "ok i%d\n", i);
-
-    }
-    //fprintf(stderr, "ok 3\n");
-
-    return pASet->m_fScore;
-}
-double GetPhi(CAlignment* pAlign, double* phi, int iParamDim, CModel* model)
-{
-    memset(phi, 0, sizeof(double) * iParamDim);
-
-    int icount = 0;
-    for (int i = 0; i < (int) pAlign->m_operation.size(); i++)
-    {
-
-        DATATYPE* a = pAlign->m_pSS1->m_vSeqs[pAlign->m_SeqIndex1[i]]->GetPoint(
-                        pAlign->m_PointIndex1[i]);
-        DATATYPE* b = pAlign->m_pSS2->m_vSeqs[pAlign->m_SeqIndex2[i]]->GetPoint(
-                        pAlign->m_PointIndex2[i]);
-        if (pAlign->m_operation[i] == SUBST)
-        {
-            icount++;
-            for (int j = 0; j < model->m_iMatchCount; j++)
-            {
-
-                int t = model->m_vMatch[j];
-                int idx = model->m_vFeatureIndex[t];
-                int wid = model->m_vWeightIndex[t];
-                //fprintf(stderr, "match, %d, %d %d \n", t, idx, wid);
-                if (model->m_vMapType[t] == MAPTYPE_CONSTANT)
-                {
-                    phi[wid] += 1;
-                }
-                else if (model->m_vMapType[t] == MAPTYPE_UNCHANGE)
-                {
-                    DATATYPE fa = a[idx];
-                    DATATYPE fb = b[idx];
-                    if (fabs(fa) + fabs(fb) > 0)
-                    {
-                        DATATYPE d = fa - fb;
-                        DATATYPE f = d * d / (fabs(fa) + fabs(fb));
-                        phi[wid] += f;
-                        //fprintf(stderr, "/%f, %f/ ", model->m_vWeight[t],  d * d / (fabs(a[i]) + fabs(b[i])));
-                    }
-                }
-                else if (model->m_vMapType[t] == MAPTYPE_ABS)
-                {
-                    DATATYPE fa = fabs(a[idx]);
-                    DATATYPE fb = fabs(b[idx]);
-                    if (fa + fb > 0)
-                    {
-                        DATATYPE d = fa - fb;
-                        DATATYPE f = d * d / (fa + fb);
-                        phi[wid] += f;
-                        //fprintf(stderr, "/%f, %f/ ", model->m_vWeight[t],  d * d / (fabs(a[i]) + fabs(b[i])));
-                    }
-                }
-                else if (model->m_vMapType[t] == MAPTYPE_EU)
-                {
-                    DATATYPE fa = a[idx];
-                    DATATYPE fb = b[idx];
-                    phi[wid] += fabs(fa - fb);
-                }
-                else if (model->m_vMapType[t] == MAPTYPE_ABSEU)
-                {
-                    DATATYPE fa = fabs(a[idx]);
-                    DATATYPE fb = fabs(b[idx]);
-                    phi[wid] += fabs(fa - fb);
-                }
-            }
-        }
-        else if (pAlign->m_operation[i] == DELET || pAlign->m_operation[i] == INSRT)
-        {
-            icount++;
-            for (int j = 0; j < model->m_iGapCount; j++)
-            {
-                int t = model->m_vGap[j];
-                int idx = model->m_vFeatureIndex[t];
-                int wid = model->m_vWeightIndex[t];
-                //fprintf(stderr, "gap, %d, %d %d \n", t, idx, wid);
-                if (model->m_vMapType[t] == MAPTYPE_CONSTANT)
-                {
-                    phi[wid] += 1;
-                }
-                else if (model->m_vMapType[t] == MAPTYPE_UNCHANGE)
-                {
-                    DATATYPE fa = a[idx];
-                    DATATYPE fb = b[idx];
-                    if (pAlign->m_operation[i] == DELET)
-                        phi[wid] += fabs(fa);
-                    else
-                        phi[wid] += fabs(fb);
-                }
-            }
-        }
-        else
-        {
-            fprintf(stderr, "error operation code %d at %d, %d %d %d %d\n",
-                    pAlign->m_operation[i], icount, pAlign->m_SeqIndex1[i],
-                    pAlign->m_SeqIndex2[i], pAlign->m_PointIndex1[i],
-                    pAlign->m_PointIndex2[i]);
-        }
-    }
-    double fsum = 0;
-    for (int i = 0; i < iParamDim; i++)
-    {
-        fsum += model->m_vWeight[i] * phi[i];
-    }
-    //fprintf(stderr, "%d %d\n", icount, (int)pAlign->m_operation.size());
-    return fsum;
-}*/

@@ -2,6 +2,7 @@
 #define DATA_H_
 #include <vector>
 #include "math.h"
+#include <string>
 using namespace std;
 
 #define DATATYPE float
@@ -45,6 +46,9 @@ public:
     DATATYPE* m_vX;
     DATATYPE* m_vY;
     int m_iID;
+// for chopped sequence
+    int m_iOriginalSeqId; 
+    int m_iStartPos;
 };
 
 class CSetOfSeq
@@ -64,6 +68,7 @@ public:
     void Update();
     void Release();
     int SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2);
+    int SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2);
     int RemoveShortSeqs(int iMinLen);
 
 protected:
@@ -77,6 +82,7 @@ public:
     vector<CSequence*> m_vSeqs;
     vector<int> m_vSeqLength;
     int m_iClassID;
+    string m_strFileName;
     
 
     

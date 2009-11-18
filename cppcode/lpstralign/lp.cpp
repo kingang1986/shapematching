@@ -570,7 +570,7 @@ double CPattern::Align(CModel* pModel)
     double iCorrect = 0;
     for (int i = 0; i < m_iTopK; i ++)
     {
-        fprintf(stderr, " %.3f", m_vSortedAlign[i]->m_fScore);
+        //fprintf(stderr, " %.3f", m_vSortedAlign[i]->m_fScore);
         if (m_vSortedAlign[i]->m_bSameClass)
         {
             fprintf(stderr, "*");
@@ -590,7 +590,7 @@ void CPattern::AlignHomolog(CModel* pModel)
         CSetOfSeq* pSS = m_vHomolog[j];
         CSWMatch* pMatch = new CSWMatch();
         CAlignment align;
-        pMatch->Match(m_original,  pSS, &align, pModel);
+        pMatch->Match(m_original, pSS, &align, pModel);
         m_vLabelHomoAlign.push_back(align);
     }
     m_vSortedLabel.clear();
@@ -670,7 +670,7 @@ void CPattern::UpdateHomologScore(int iParamDim, CModel* pModel)
     sort(m_vSortedLabel.begin(), m_vSortedLabel.end(), cmpAlign);
     for (int i = 0; i < m_iTopK; i ++)
     {
-        fprintf(stderr, "%.3f ", m_vSortedLabel[i]->m_fScore);
+        //fprintf(stderr, "%.3f ", m_vSortedLabel[i]->m_fScore);
     }
     return;
 }
