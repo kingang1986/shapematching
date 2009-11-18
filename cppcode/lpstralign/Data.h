@@ -35,12 +35,14 @@ public:
     void Release();
     void SetPointValue(int iPoint, DATATYPE* vFeature);
     DATATYPE* GetPoint(int iIndex);
+
+//data
+public: 
     int m_iFeatureDim;
     int m_iPoint;
     DATATYPE** m_vFeature;
     DATATYPE* m_vX;
     DATATYPE* m_vY;
-
     int m_iID;
      
 
