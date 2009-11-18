@@ -224,8 +224,8 @@ void CSWMatch::UpdateMatching()
 
 double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model)
 {
-    m_pSS1 = pSS1;
-    m_pSS2 = pSS2;
+    m_pSS1 = new CSetOfSeq(*pSS1);
+    m_pSS2 = new CSetOfSeq(*pSS2);
     m_model = model;
 
     pSS1->RemoveShortSeqs(3);
@@ -263,6 +263,8 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
         UpdateMatching();
     }
  //   fprintf(stderr, "%d %d %f ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, fTotalScore);
+    delete m_pSS1;
+    delete m_pSS2;
     return fTotalScore; 
 }
 /*

@@ -30,6 +30,7 @@ class CSequence
 {
 public:
     CSequence();
+    CSequence(const CSequence& seq);
     ~CSequence();
     int Allocate(int nPoint, int nFeatureDim);
     void Release();
@@ -44,8 +45,6 @@ public:
     DATATYPE* m_vX;
     DATATYPE* m_vY;
     int m_iID;
-     
-
 };
 
 class CSetOfSeq
@@ -53,6 +52,7 @@ class CSetOfSeq
 
 public:
     CSetOfSeq();
+    CSetOfSeq(const CSetOfSeq& ss);
     ~CSetOfSeq();
     int AddSequence(CSequence* pSeq);
     int LoadSS(const char* strFile);
