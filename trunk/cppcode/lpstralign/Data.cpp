@@ -89,6 +89,22 @@ CSequence::CSequence()
     m_vY = NULL;
     m_vFeature = NULL;
 }
+
+CSequence::CSequence(const CSequence& seq) // deep copy
+{
+    m_iFeatureDim = seq.m_iFeatureDim;
+    m_iPoint = seq.m_iPoint;
+    Allocate(m_iPoint, m_iFeatureDim);
+    memcpy(m_vX, seq.m_vX, sizeof(DATATYPE) * m_iPoint);
+    memcpy(m_vY, seq.m_vY, sizeof(DATATYPE) * m_iPoint);
+    for (int i = 0; i < m_iPoint; i ++)
+    {
+         memcpy(m_vFeature[i], seq.m_vFeature[i], sizeof(DATATYPE) * m_iFeatureDim);
+    }
+    m_iID = seq.m_iID;
+
+}
+
 CSequence::~CSequence()
 {
     Release();
@@ -146,11 +162,25 @@ DATATYPE* CSequence::GetPoint(int iIndex)
 /////////////////////////////////////////////////////////////
 //class CSetOfSeq
 /////////////////////////////////////////////////////////////
+
 CSetOfSeq::CSetOfSeq()
 {
     m_iSeqNum = 0;
     m_iTotalPoint = 0;
     m_iSeqIds = 1001;
+}
+CSetOfSeq::CSetOfSeq(const CSetOfSeq& ss)
+{
+    m_iSeqNum = ss.m_iSeqNum;
+    m_iFeatureDim = ss.m_iFeatureDim;   
+    m_iTotalPoint = ss.m_iTotalPoint;
+    for (int i = 0; i < (int) m_vSeqs.size(); i ++)
+    {
+        CSequence* pSeq = new CSequence(*(ss.m_vSeqs[i]));
+        m_vSeqs.push_back(pSeq); 
+    }
+    m_iClassID = ss.m_iClassID;
+    
 }
 void CSetOfSeq::Release()
 {
