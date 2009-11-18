@@ -92,6 +92,10 @@ CSequence::CSequence()
 
 CSequence::CSequence(const CSequence& seq) // deep copy
 {
+    m_vX = NULL;
+    m_vY = NULL;
+    m_vFeature = NULL;
+    
     m_iFeatureDim = seq.m_iFeatureDim;
     m_iPoint = seq.m_iPoint;
     Allocate(m_iPoint, m_iFeatureDim);
@@ -102,6 +106,8 @@ CSequence::CSequence(const CSequence& seq) // deep copy
          memcpy(m_vFeature[i], seq.m_vFeature[i], sizeof(DATATYPE) * m_iFeatureDim);
     }
     m_iID = seq.m_iID;
+    m_iOriginalSeqId = seq.m_iOriginalSeqId;
+    m_iStartPos = seq.m_iStartPos;
 
 }
 
@@ -135,7 +141,7 @@ int CSequence::Allocate(int nPoint, int nFeatureDim)
     Release();
     m_iFeatureDim = nFeatureDim;
     m_iPoint = nPoint;
-    printf("%d ", nPoint);
+    //printf("%d ", nPoint);
     m_vFeature = new DATATYPE*[nPoint];
     m_vX = new DATATYPE[nPoint];
     m_vY = new DATATYPE[nPoint];
@@ -174,7 +180,7 @@ CSetOfSeq::CSetOfSeq(const CSetOfSeq& ss)
     m_iSeqNum = ss.m_iSeqNum;
     m_iFeatureDim = ss.m_iFeatureDim;   
     m_iTotalPoint = ss.m_iTotalPoint;
-    for (int i = 0; i < (int) m_vSeqs.size(); i ++)
+    for (int i = 0; i < (int) ss.m_vSeqs.size(); i ++)
     {
         CSequence* pSeq = new CSequence(*(ss.m_vSeqs[i]));
         m_vSeqs.push_back(pSeq); 
@@ -256,8 +262,8 @@ int CSetOfSeq::CheckSeq(const char* file)
    fclose(f);
    m_iFeatureDim = iFeatureDim - 4;
    m_iSeqNum = (int)m_vSeqLength.size();
-//   for (int k = 0; k < m_vSeqLength.size(); k ++)
-//       fprintf(stderr, "%d of %d, feat len %d\n", k, m_vSeqLength.size(), m_iFeatureDim);
+   //for (int k = 0; k < m_vSeqLength.size(); k ++)
+    //   fprintf(stderr, "%d of %d, feat len %d\n", k, m_vSeqLength.size(), m_iFeatureDim);
    Update();
    return (int)m_vSeqLength.size();
 }
@@ -277,6 +283,16 @@ int CSetOfSeq::RemoveShortSeqs(int iMinLen)
 
 }
 
+
+int CSetOfSeq::SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2)
+{
+    for (int i = 0; i < m_iSeqNum; i ++)
+    {
+        if (m_vSeqs[i]->m_iID == iSeqID)
+            return SplitSeq(i, iSplitPos1, iSplitPos2);
+    }
+    return -1;
+}
 int CSetOfSeq::LoadSSBinary(const char* strFile)
 {
     Release();
@@ -347,20 +363,26 @@ int CSetOfSeq::LoadSS(const char* strFile)
     FILE* f;
     char line[32768];
     char tmp[32768];
+    //strcpy(strFile, m_strFileName);
     //start here
     //fprintf(stderr, "cehck file");
     CheckSeq(strFile) ; //count the number of sequence separators
     if ((f = fopen(strFile, "r")) == NULL)
     {
-        fprintf(stderr, "cant' open file %s", strFile);
+        fprintf(stderr, "can't open file %s", strFile);
         return -1;
     }
+    //    strcpy(m_strFileName, strFile);
+    
+    m_strFileName = strFile;
+    //m_strFileName = "hello"; 
     fgets(line, 32768, f); //head line
     m_iTotalPoint = 0;
     for (int i = 0; i < (int)m_vSeqLength.size(); i ++)
     {
         CSequence* pSeq = new CSequence();
         pSeq->Allocate(m_vSeqLength[i], m_iFeatureDim);
+        pSeq->m_iStartPos = 0;
         for (int j = 0; j < m_vSeqLength[i]; j ++)
         {
             line[0] = 0;
@@ -390,7 +412,9 @@ int CSetOfSeq::LoadSS(const char* strFile)
                 }
             }
         }
+        pSeq->m_iOriginalSeqId = (int)m_vSeqs.size();
         m_vSeqs.push_back(pSeq);
+        
         m_iTotalPoint += m_vSeqLength[i];
     }
     fclose(f);
@@ -433,6 +457,7 @@ void CSetOfSeq::Update()
 
 int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
 {
+//    fprintf(stderr, "split %d from %d to %d\n", iSeqIndex, iSplitPos1, iSplitPos2);
     CSequence* pSeq = m_vSeqs[iSeqIndex];
     int iLen = pSeq->m_iPoint;
     if (iSplitPos1 > 0)
@@ -443,6 +468,8 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
         {
             pSeq1->SetPointValue(i, m_vSeqs[iSeqIndex]->GetPoint(i));
         }
+        pSeq1->m_iOriginalSeqId = iSeqIndex;
+        pSeq1->m_iStartPos = m_vSeqs[iSeqIndex]-> m_iStartPos;
         AddSequence(pSeq1);
         
     } 
@@ -455,8 +482,11 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
         {
              pSeq2->SetPointValue(i - iSplitPos2 - 1, m_vSeqs[iSeqIndex]->GetPoint(i));
         }
+        pSeq2->m_iOriginalSeqId = iSeqIndex;
+        pSeq2->m_iStartPos = m_vSeqs[iSeqIndex]-> m_iStartPos + iSplitPos2 + 1;
         AddSequence(pSeq2);
     }
+//    fprintf(stderr, " total %d seqs\n", m_vSeqs.size());
     m_vSeqs.erase(m_vSeqs.begin() + iSeqIndex);
     delete  pSeq;
     Update();

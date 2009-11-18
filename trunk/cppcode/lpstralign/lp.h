@@ -91,7 +91,6 @@ public: //members
 
     double UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio);
     int AlignHomolog(CModel* pModel);
-//    double AddConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly);
 
     //active patterns
     vector<int> m_vActive;
