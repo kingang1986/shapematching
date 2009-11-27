@@ -93,6 +93,7 @@ double CSWMatch::Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, C
 {
 
     //allocate nodes
+//    fprintf(stderr, "oper (%d,  %d), (%d, %d)\n",  pSeqA->m_iOriginalSeqId, pSeqA->m_iStartPos, pSeqB->m_iOriginalSeqId, pSeqB->m_iStartPos);
 
     CSWNode ** S;
     //fprintf(stderr, "ttok-1\n");
@@ -177,7 +178,6 @@ double CSWMatch::Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, C
     int oper_count = 0;
     while (temp_node->prev)
     {
-//        fprintf(stderr, "oper (%d %d, %d), (%d, %d)\n",  pSeqA->m_iOriginalSeqId, temp_node->prev->row_index , pSeqA->m_iStartPos, pSeqB->m_iOriginalSeqId, temp_node->prev->column_index + pSeqB->m_iStartPos);
         pAlign->m_SeqIndex1.push_back(pSeqA->m_iOriginalSeqId);
         pAlign->m_SeqIndex2.push_back(pSeqB->m_iOriginalSeqId);
         pAlign->m_PointIndex1.push_back(temp_node->prev->row_index + pSeqA->m_iStartPos);
