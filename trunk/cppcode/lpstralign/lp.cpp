@@ -147,25 +147,13 @@ int CSample::SetAllActive()
     return m_nPattern;
 }
 
-/*
-void CSample::UpdateHomologScore(CModel* pModel)
-{
-    int iParamDim = pModel->m_iParamDim;
-    for (int i = 0; i < m_nPattern; i ++)
-    {
-        CPattern* pPattern = m_vPatterns[i];
-        pPattern->UpdateHomologScore(iParamDim, pModel);
-    }
-
-    return;
-}
-*/
 
 int CSample::AlignHomolog(CModel* pModel)
 {
     for (int i = 0; i < m_nPattern; i ++)
     {
         CPattern* pPattern = m_vPatterns[i];
+        fprintf(stderr, "\nPattern %d\n", i);
         pPattern->AlignHomolog(pModel);
     }
     return m_nPattern;
@@ -591,8 +579,10 @@ void CPattern::AlignHomolog(CModel* pModel)
         CSWMatch* pMatch = new CSWMatch();
         CAlignment align;
         pMatch->Match(m_original, pSS, &align, pModel);
+        fprintf(stderr, "(%d, %f) ", j, align.m_fScore);
         m_vLabelHomoAlign.push_back(align);
     }
+    
     m_vSortedLabel.clear();
     for (int i = 0; i < (int)m_vLabelHomoAlign.size(); i ++)
         m_vSortedLabel.push_back(&m_vLabelHomoAlign[i]);
