@@ -46,6 +46,7 @@ public:
     DATATYPE* m_vX;
     DATATYPE* m_vY;
     int m_iID;
+
 // for chopped sequence
     int m_iOriginalSeqId; 
     int m_iStartPos;
@@ -71,8 +72,6 @@ public:
     int SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2);
     int RemoveShortSeqs(int iMinLen);
 
-protected:
-    int m_iSeqIds;
 
 //Data
 public:    
@@ -81,10 +80,10 @@ public:
     int m_iTotalPoint;
     vector<CSequence*> m_vSeqs;
     vector<int> m_vSeqLength;
-    int m_iClassID;
     string m_strFileName;
-    
-
+    int m_iShapeID;
+    int m_iClassID;
+    int m_iSeqIds;
     
 };
 

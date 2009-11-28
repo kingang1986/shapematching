@@ -8,29 +8,36 @@
 class CPattern
 {
 public:
+    static int  m_iTopK;
+    static int  m_iTotalClass;
+
+public:
     CPattern();
     ~CPattern();
+
     void Align();
     double GetLabelLoss();
 
     CSetOfSeq* m_original;
-    vector<CSetOfSeq*> m_vHomolog;
-    vector<CSetOfSeq*> m_vDecoy;
-    vector<CAlignment> m_vLabelHomoAlign;
-    vector<CAlignment> m_vAligns; //first homolog and then decoy
-    vector<CAlignment*> m_vSortedAlign;
-    vector<CAlignment*> m_vSortedLabel;
+    vector<vector<CSetOfSeq*> > m_vShapeClass;
+    vector<vector<CAlignment> > m_vShapeAlign;
+    vector<vector<CAlignment*> > m_vSortedShapeAlign;
 
-    double Align(CModel* pModel);
-    double GetLabeledPhi(double*, int iParamDim,  CModel*);
-    void GetDecoyPhi(double*, int iParamDim, CModel*);
-    void UpdateHomologScore(int iParamDim, CModel*);
-    void AlignHomolog(CModel* pModel);
+    void   AlignDecoy(CModel* pModel);
+    void   AlignHomolog(CModel* pModel);
+    int    AlignClass(int iClassId, CModel* pModel);
+    double GetLabelPhi(double*, int iParamDim, CModel*);
+    double GetDecoyPhi(double*, int iParamDim, CModel*);
+    double GetLabelLoss(CModel*);
+
+    double Classify(CModel* pModel) ;
     int m_id;
-    int m_iHomolog;
-    int m_iDecoy;
-    static int  m_iTopK;
-    
+
+
+
+protected:
+    DATATYPE* m_pLabelPhi;
+    double GetClassPhi(double* pw, int iParamDim, int iClassID, CModel* pModel) ;
 };
 
 //////////////////////////////////////////////////////
@@ -66,13 +73,11 @@ class CSample
 {
 protected:
     CSetOfSeq* LoadSoS(const  char* strSoSFile);
+    CSetOfSeq* FindSoS(const  char* strSoSFile);
     int Release();
 
 
 public:
-    int m_nShapes; //not uniq
-    int m_nPattern;
-    int m_nSetOfSeq;
     int m_iFeatureDim;
     bool m_bBinaryData;
 
@@ -80,23 +85,23 @@ public:
     vector<CSetOfSeq*> m_vSS;
     vector<CPattern*> m_vPatterns;
     char m_szFolder[500];
-//    void UpdateHomologScore(CModel* pModel);
 
 public: //members
     CSample();
     ~CSample();
-    int LoadSample(const  char* strFile);
-    //int AlignPatterns(CModel* pModel);
-    int AlignSamples(CModel* pModel, const char* outputfile);
+    int AlignHomolog(CModel* pModel);
+    int Classify(CModel* pModel, const char* outputfile);
 
     double UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio);
-    int AlignHomolog(CModel* pModel);
 
     //active patterns
     vector<int> m_vActive;
     int SetAllActive();
     int GetActiveNum();
     int m_iLastUpdated;
+
+    int LoadShape(const char* strFile);
+    int LoadPattern(const char* strFile);
 
 };
 
@@ -107,17 +112,13 @@ public:
     CStructureLearning();
     ~CStructureLearning();
     int Learn(const char* );
-    int Init(const char* datafile, const char* szpath, const char* modelfile, bool bBinaryData);
-
-//    int FindMostViolate(CPattern* p);
+    int Init(const char* datafile, const char* patternfile, const char* szpath, const char* modelfile, bool bBinaryData);
 
 public:
     bool m_bLoadModelFromFile;
     char* m_strModelFile;
     CSample m_Sample;
     CModel m_Model;
-
-
 
     double m_fEpsilon;
     double m_fDistance;

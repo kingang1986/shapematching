@@ -33,14 +33,16 @@ public:
     }   
     ~CSWMatch();
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel);
-    
-    //double Match(int iSSIndex1, int iSSIndex2, CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
     double Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
-//    double Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
+
 protected:
     double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model);
     double getGapCost(DATATYPE* a, CModel* model);
     std::map<pair<int,int>, CAlignment*> m_mapCachedMatching;// cached matching score 
+    void ReleaseMatchingTable();
+    void RemoveTable(int shapei, int shapej);
+    CSetOfSeq* m_pOSS1;
+    CSetOfSeq* m_pOSS2;
     CSetOfSeq* m_pSS1;
     CSetOfSeq* m_pSS2;
     CModel* m_model;
