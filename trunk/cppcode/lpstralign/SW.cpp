@@ -197,6 +197,33 @@ double CSWMatch::Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, C
     return pAlign->m_fScore;
 
 }
+void CSWMatch::ReleaseMatchingTable()
+{
+    std::map<pair<int, int>, CAlignment*>::iterator itr; 
+    for(itr = m_mapCachedMatching.begin(); itr != m_mapCachedMatching.end(); ++itr)
+    {
+         CAlignment* pAlign =(CAlignment*) (*itr).second;
+         delete pAlign;
+    }
+
+}
+
+void CSWMatch::RemoveTable(int shapei, int shapej)
+{
+        std::map<pair<int, int>, CAlignment*>::iterator itr; 
+        std::map<pair<int, int>, CAlignment*>::iterator maxitr; 
+        for(itr = m_mapCachedMatching.begin(); itr != m_mapCachedMatching.end(); ++itr)
+        {
+             
+             int p1 = (*itr).first.first; 
+             int p2 = (*itr).first.second;
+             CAlignment* pAlign =(CAlignment*) (*itr).second;
+             if (p1 == shapei || p2 == shapej)
+             {
+                 pAlign->m_fScore = -1; 
+             }
+        }
+}
 
 void CSWMatch::UpdateMatching()
 {
@@ -207,11 +234,12 @@ void CSWMatch::UpdateMatching()
         {
             CSequence* pS2 = m_pSS2->m_vSeqs[j];
             CAlignment* pAlign = new CAlignment();
-            pAlign->m_pSS1 = m_pSS1;
-            pAlign->m_pSS2 = m_pSS2;
+            pAlign->m_pSS1 = m_pOSS1;
+            pAlign->m_pSS2 = m_pOSS2;
             pair<int, int> p ;
             p.first = pS1->m_iID;
             p.second = pS2->m_iID;
+//            fprintf(stderr, "(%d, %d) ", p.first, p.second);
             if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
             {
                 Match(pS1, pS2, pAlign, m_model);
@@ -224,6 +252,8 @@ void CSWMatch::UpdateMatching()
 
 double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model)
 {
+    m_pOSS1 = pSS1;
+    m_pOSS2 = pSS2;
     m_pSS1 = new CSetOfSeq(*pSS1);
     m_pSS2 = new CSetOfSeq(*pSS2);
     m_model = model;
@@ -233,35 +263,45 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
 
     UpdateMatching();
     double fTotalScore = 0;
-//    fprintf(stderr, "matching %s and %s \n", pSS1->m_strFileName.c_str(), pSS2->m_strFileName.c_str()); 
+    pASet->m_pSS1 = pSS1;
+    pASet->m_pSS2 = pSS2;
     while (m_pSS1->m_iSeqNum > 0 && m_pSS2->m_iSeqNum > 0)
     {
         double fMaxScore = -1;
         int bestP1 = 0, bestP2 = 0;
         CAlignment* pBestAlign = NULL;
         std::map<pair<int, int>, CAlignment*>::iterator itr; 
+        std::map<pair<int, int>, CAlignment*>::iterator maxitr; 
         for(itr = m_mapCachedMatching.begin(); itr != m_mapCachedMatching.end(); ++itr)
         {
              CAlignment* pAlign =(CAlignment*) (*itr).second;
              if (pAlign->m_fScore > fMaxScore) 
              {
+                      
+                 maxitr = itr;
                  fMaxScore = pAlign->m_fScore;
                  bestP1 = (*itr).first.first; 
                  bestP2 = (*itr).first.second;
+                 fprintf(stderr, "<< %d %d %.4f\n", bestP1, bestP2, fMaxScore);
                  pBestAlign = pAlign;
              }
         }
         pASet->AddAlignment(*pBestAlign);
         fTotalScore += fMaxScore;
+        if (fMaxScore <0.01) break;
+       
         int start1, end1, start2, end2; 
         pBestAlign->GetBound(start1, end1, start2, end2);
         m_pSS1->SplitSeqByID(bestP1, start1, end1); 
         m_pSS2->SplitSeqByID(bestP2, start2, end2); 
+        RemoveTable(bestP1, bestP2);
+        fprintf(stderr, "(%d %d %d %d %f %f) ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, bestP1, bestP2,fMaxScore, fTotalScore);
         m_pSS1->RemoveShortSeqs(3);
         m_pSS2->RemoveShortSeqs(3);
+//        fprintf(stderr, "(%f %d %d  %d %d )", fMaxScore, start1, end1, start2, end2); 
         UpdateMatching();
     }
- //   fprintf(stderr, "%d %d %f ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, fTotalScore);
+    ReleaseMatchingTable();
     delete m_pSS1;
     delete m_pSS2;
     return fTotalScore; 
