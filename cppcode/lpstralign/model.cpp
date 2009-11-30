@@ -79,7 +79,7 @@ int CModel::Write(const char* strFile)
 int CModel::Read(const char* strFile)
 {
 
-    fprintf(stderr, "Reading struct model from %s", strFile);
+    fprintf(stderr, "Reading struct model from %s ...", strFile);
     Release();
 
     int itotaline = count_line(strFile);
@@ -149,8 +149,8 @@ int CModel::Read(const char* strFile)
     }
     m_iMatchCount = matchcount;
     m_iGapCount = gapcount;
-
-    return m_iParamDim; } 
+    return m_iParamDim; 
+} 
 void CModel::Release()
 {
     if (m_vWeight != NULL)

@@ -55,7 +55,9 @@ public:
     int SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2);
     int SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2);
     int RemoveShortSeqs(int iMinLen);
-
+    int GetXY(int iSeq, int iPt, float& x, float& y);
+    int GetSeqNum() { return m_iSeqNum;}
+    int GetSeqLength(int iSeq) { if (iSeq < m_iSeqNum) return m_vSeqs[iSeq]->m_iPoint;}
 
 //Data
 public:    

@@ -110,7 +110,6 @@ CSequence::CSequence(const CSequence& seq) // deep copy
     m_iStartPos = seq.m_iStartPos;
 
 }
-
 CSequence::~CSequence()
 {
     Release();
@@ -135,7 +134,6 @@ void CSequence::Release()
     m_iFeatureDim = 0;
     return ;
 }
-
 int CSequence::Allocate(int nPoint, int nFeatureDim)
 {
     Release();
@@ -205,6 +203,21 @@ void CSetOfSeq::Release()
 CSetOfSeq::~CSetOfSeq()
 {
     Release();
+}
+int CSetOfSeq::GetXY(int iSeq, int iPt, float& x, float& y)
+{
+    x = y = -1;
+    if (iSeq < m_iSeqNum)
+    {
+        CSequence* pSeq = m_vSeqs[iSeq];
+        if (iPt < pSeq->m_iPoint)
+        {
+            x = pSeq->m_vX[iPt];
+            y = pSeq->m_vY[iPt];
+            return 1;
+        }
+    }
+    return -1;
 }
 
 int CSetOfSeq::AddSequence(CSequence* pSeq)
