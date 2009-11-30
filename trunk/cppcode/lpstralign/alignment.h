@@ -21,6 +21,16 @@ class CModel;
 class CAlignment
 {
 public:
+
+
+    CAlignment();
+    ~CAlignment();
+    double  AddAlignment(CAlignment& align);
+    double  GetPhi(double* phi, int iParamDim, CModel* model);
+    void    GetBound(int& start1, int& end1, int& start2, int& end2);
+    int GetOperNum();
+    int GetOper(int iIndex, int& oper, int& seq1, int& seq2, int&pt1, int& pt2);
+    
     CSetOfSeq* m_pSS1;
     CSetOfSeq* m_pSS2;
     
@@ -30,14 +40,5 @@ public:
     vector<int> m_PointIndex2;
     vector<int> m_operation;
     double m_fScore;
-
-    int GetOperNum();
-    int GetOper(int iIndex, int& seq1, int& seq2, int&pt1, int& pt2);
-    CAlignment();
-    ~CAlignment();
-    double  AddAlignment(CAlignment& align);
-    double  GetPhi(double* phi, int iParamDim, CModel* model);
-    void    GetBound(int& start1, int& end1, int& start2, int& end2);
-    
 };
 #endif

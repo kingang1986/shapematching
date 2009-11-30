@@ -18,9 +18,11 @@ CAlignment::~CAlignment()
 
 }
 int CAlignment::GetOperNum() { return (int) m_operation.size();}
-int CAlignment::GetOper(int iIndex, int& seq1, int& seq2, int& pt1, int&pt2)
+int CAlignment::GetOper(int iIndex, int& oper, int& seq1, int& seq2, int& pt1, int&pt2)
 {
+    oper = seq1 = seq2 = pt1 = pt2 = -1;
     if (iIndex < 0 || iIndex > m_operation.size()) return -1;
+    oper = m_operation[iIndex];
     seq1 = m_SeqIndex1[iIndex];
     seq2 = m_SeqIndex2[iIndex];
     pt1 = m_PointIndex1[iIndex];
