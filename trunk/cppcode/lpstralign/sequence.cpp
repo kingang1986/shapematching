@@ -7,6 +7,7 @@
 void chompstr(char* line)
 {
     int len = strlen(line);
+    if (len <= 0) return;
     if (line[len - 1] == '\n')
     {
         line[len - 1] = 0;
@@ -423,6 +424,7 @@ int CSetOfSeq::LoadSS(const char* strFile)
         m_iTotalPoint += m_vSeqLength[i];
     }
     fclose(f);
+    Update();
     //Print();
     return m_iTotalPoint;
 

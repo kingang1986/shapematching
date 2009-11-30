@@ -17,7 +17,17 @@ CAlignment::~CAlignment()
 {
 
 }
+int CAlignment::GetOperNum() { return (int) m_operation.size();}
+int CAlignment::GetOper(int iIndex, int& seq1, int& seq2, int& pt1, int&pt2)
+{
+    if (iIndex < 0 || iIndex > m_operation.size()) return -1;
+    seq1 = m_SeqIndex1[iIndex];
+    seq2 = m_SeqIndex2[iIndex];
+    pt1 = m_PointIndex1[iIndex];
+    pt2 = m_PointIndex2[iIndex];
+    return iIndex;
 
+}
 double CAlignment::AddAlignment(CAlignment& align)
 {
     if ((m_pSS1 != NULL && m_pSS1 != align.m_pSS1) || (m_pSS2 != NULL && m_pSS2 != align.m_pSS2))
