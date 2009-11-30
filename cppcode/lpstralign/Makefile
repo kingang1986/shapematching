@@ -27,9 +27,11 @@ lp.o: lp.cpp
 main.o: main.cpp
 	g++ -g -Wall -I/net/irdev22/export/crawlspace/longbin/install/glpk/include -c main.cpp
 clean:
-	rm -rf *~ $(OBJS) $(PROG) ${SWIGS} ${WRAPS} main.o _sequence.so
-python: mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o  
-	g++ -shared mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o -o _mss.so
+	rm -rf *~ $(OBJS) $(PROG) ${SWIGS} mss_wrap.cpp mss_wrap.o main.o _mss.so
+python: mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o SW_swig.o 
+	g++ -shared mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o SW_swig.o -o _mss.so
+SW_swig.o: SW.cpp
+	gcc -fPIC -c SW.cpp -o SW_swig.o 
 sequence_swig.o: sequence.cpp
 	gcc -fPIC -c sequence.cpp -o sequence_swig.o 
 model_swig.o: model.cpp
