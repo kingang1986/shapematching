@@ -33,8 +33,6 @@ public:
     double Classify(CModel* pModel) ;
     int m_id;
 
-
-
 protected:
     DATATYPE* m_pLabelPhi;
     double GetClassPhi(double* pw, int iParamDim, int iClassID, CModel* pModel) ;
