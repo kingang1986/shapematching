@@ -1,9 +1,6 @@
-#include "Data.h"
-#include <cstdlib>
-#include <string.h>
-#include <stdio.h>
-#include "sequence.h"
-
+#include "model.h"
+#include "stdio.h"
+#include "stdlib.h"
 
 /////////////////////////////////////////////////////////////
 //class CModel
