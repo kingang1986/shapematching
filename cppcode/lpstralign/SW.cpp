@@ -267,6 +267,12 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     pASet->m_pSS2 = pSS2;
     while (m_pSS1->m_iSeqNum > 0 && m_pSS2->m_iSeqNum > 0)
     {
+    //    fprintf(stderr, "\nmatching (%d seq  %d seq )", m_pSS1->m_iSeqNum, m_pSS2->m_iSeqNum);
+      // for (int kk = 0; kk < m_pSS1->m_iSeqNum; kk ++)
+        //      fprintf(stderr, " (seq %d, id %d : %d ) ", kk, m_pSS1->m_vSeqs[kk]->m_iID, m_pSS1->m_vSeqs[kk]->m_iPoint);
+      // for (int kk = 0; kk < m_pSS2->m_iSeqNum; kk ++)
+        //   fprintf(stderr, " (seq %d, id %d : %d ) ", kk, m_pSS2->m_vSeqs[kk]->m_iID, m_pSS2->m_vSeqs[kk]->m_iPoint);
+ 
         double fMaxScore = -1;
         int bestP1 = 0, bestP2 = 0;
         CAlignment* pBestAlign = NULL;
@@ -282,23 +288,23 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
                  fMaxScore = pAlign->m_fScore;
                  bestP1 = (*itr).first.first; 
                  bestP2 = (*itr).first.second;
-                 fprintf(stderr, "<< %d %d %.4f\n", bestP1, bestP2, fMaxScore);
+          //      fprintf(stderr, "<< %d %d %.4f\n", bestP1, bestP2, fMaxScore);
                  pBestAlign = pAlign;
              }
         }
         pASet->AddAlignment(*pBestAlign);
         fTotalScore += fMaxScore;
-        if (fMaxScore <0.01) break;
+        if (fMaxScore <= 0.000001) break;
        
         int start1, end1, start2, end2; 
         pBestAlign->GetBound(start1, end1, start2, end2);
         m_pSS1->SplitSeqByID(bestP1, start1, end1); 
         m_pSS2->SplitSeqByID(bestP2, start2, end2); 
         RemoveTable(bestP1, bestP2);
-        fprintf(stderr, "(%d %d %d %d %f %f) ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, bestP1, bestP2,fMaxScore, fTotalScore);
+//        fprintf(stderr, "(%d %d %d %d %f %f) ", m_pSS1->m_iSeqNum,m_pSS2->m_iSeqNum, bestP1, bestP2,fMaxScore, fTotalScore);
         m_pSS1->RemoveShortSeqs(3);
         m_pSS2->RemoveShortSeqs(3);
-//        fprintf(stderr, "(%f %d %d  %d %d )", fMaxScore, start1, end1, start2, end2); 
+  //      fprintf(stderr, "(%f %d %d  %d %d )", fMaxScore, start1, end1, start2, end2); 
         UpdateMatching();
     }
     ReleaseMatchingTable();

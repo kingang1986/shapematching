@@ -52,9 +52,9 @@ public:
 	virtual int ValueNeeded() { return 1; }
 private:
 	char	m_cOptChar;
- const	char	*m_szKeyword;
-const	char	*m_szValue;
-const	char	*m_szDescription;
+    const	char	*m_szKeyword;
+    const	char	*m_szValue;
+    const	char	*m_szDescription;
 	unsigned int m_dwSyntaxFlags;
 	bool	m_bArgAvailable;
 };
@@ -65,10 +65,10 @@ public:
 	CCmdArgInt(char cOptChar, 
 	const	       char *szKeyword, 
 	const		   char *szValue, 
-			   char iDefault,
+    char iDefault,
 	const		   char* szDescription, 
-			   unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
-		: CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags), m_iValue(iDefault) {}
+    unsigned int syntax_flags = CCmdArg::isOPTVALREQ)
+	    : CCmdArg(cOptChar, szKeyword, szValue, szDescription, syntax_flags), m_iValue(iDefault) {}
 	virtual ~CCmdArgInt() {}
 	operator int(void)  const { return  m_iValue; }
 	virtual int SetValue(char *argv[])
@@ -248,7 +248,7 @@ class CTaskItem
 	std::vector<CCmdArg*> m_arrArgList;
 public:
 	const char*	m_szDescription;	//e.g. "detect folder: detect the face in the whole image folder
-const	char*	m_szTaskName;		//e.g. "Folder"
+    const char*	m_szTaskName;		//e.g. "Folder"
 	int		(*m_MethodFunction)();
 	CTaskItem()
 	{
@@ -292,15 +292,18 @@ public:
 		strcpy(m_szVersion, szVersion);
 	}
 	int		Run();
+	const char * operator[] (int i) { return m_arrArgs[i]; }
+    int   GetArgNum() { return (int) m_arrArgs.size();}
+	void		DisplayAllTask();
+	void		DisplayTaskDetails();
 protected:
 	bool		ParseArgs(int argc, char* argv[]);
 	bool		ParseTask(int argc, char* argv[]);
 	std::vector<CTaskItem*>	m_arrTaskItems;
 	int			m_iTaskIndex;
-	void		DisplayTaskDetails();
-	void		DisplayAllTask();
 	const char*		szAppName;
 	char		m_szVersion[_MAX_PATH];
+    vector<const char*> m_arrArgs;
 };
 
 CParser::CParser(const char* szProgramName, int iCount, ...)
@@ -347,6 +350,7 @@ void CParser::DisplayTaskDetails()
 {
 	char buf[1024];
 	//printf("Task: %s\n", m_arrTaskItems[m_iTaskIndex]->m_szTaskName);
+	printf(" %-10s %s\n", m_arrTaskItems[m_iTaskIndex]->m_szTaskName, m_arrTaskItems[m_iTaskIndex]->m_szDescription);
 	printf("%s %s", szAppName, m_arrTaskItems[m_iTaskIndex]->m_szTaskName);
 	for (int i = 0; i < m_arrTaskItems[m_iTaskIndex]->Size(); i++)
 	{
@@ -394,8 +398,10 @@ bool CParser::ParseArgs(int argc, char* argv[])
     {
         if ( argv[i][0] != '-') 
 		{
-            printf("Switch '-' is expected before %s\n\n", argv[i]);
-			return false;
+            //printf("Switch '-' is expected before %s\n\n", argv[i]);
+			//return false;
+            m_arrArgs.push_back(argv[i]);
+            continue;
 		}
 		CCmdArg *pArg = NULL;
 		int iItemIndex = 0;

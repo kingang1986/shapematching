@@ -178,10 +178,11 @@ int CSample::SetAllActive()
 
 int CSample::AlignHomolog(CModel* pModel)
 {
+    fprintf(stderr, "\n");
     for (int i = 0; i < (int) m_vPatterns.size(); i ++)
     {
         CPattern* pPattern = m_vPatterns[i];
-        fprintf(stderr, "\nPattern %d\n", i);
+        fprintf(stderr, "\rPattern %d   ", i);
         pPattern->AlignHomolog(pModel);
     }
     return (int)m_vPatterns.size();
@@ -214,7 +215,7 @@ int CSample::Classify(CModel* pModel, const char* outputfile)
 
 //add constraints upto iMinNewConstraint, starting from last updated pattern
 
-double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio)
+double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio, double fEpsilon)
 {
     int iNewConstraint = 0;
     double fsumvio = 0.0;
@@ -229,15 +230,14 @@ double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActive
         if (bActiveOnly && m_vActive[ii] == 0)
             continue;
         CPattern* pPattern = m_vPatterns[ii];
-        fprintf(stderr, "\n %d", ii);
         pPattern->AlignDecoy(pModel);
         int iParamDim = pModel->m_iParamDim;
         double* pw1 = new double[iParamDim];
         double* pw2 = new double[iParamDim];
         double labelloss = pPattern->GetLabelLoss(pModel);
         pPattern->GetLabelPhi(pw1, iParamDim, pModel);
-        fprintf(stderr, " label loss %.3f ", labelloss);
-        pPattern->GetDecoyPhi(pw2, iParamDim, pModel);
+//        fprintf(stderr, " label loss %.3f ", labelloss);
+        int iDecoyClass = pPattern->GetDecoyPhi(pw2, iParamDim, pModel);
         double fsum = 0, fs2 = 0;
         for (int k = 0; k < iParamDim; k ++)
         {
@@ -245,8 +245,9 @@ double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActive
             fs2 += pw2[k] * pModel->m_vWeight[k];
         }
         vio = fsum - fs2 - labelloss;
-        //if (vio > -0.00001)
-        if (labelloss < 0.00001)
+        fprintf(stderr, "\n %d (class %d) %.3f, (%d %.3f %.3f) ", ii, pPattern->m_original->m_iClassID, fsum, iDecoyClass, fs2, -vio);
+        if (vio > - fEpsilon)
+        //if (labelloss < 0.00001)
         {
             m_vActive[ii] = 0;
         }
@@ -262,7 +263,7 @@ double CSample::UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActive
             iNumVio ++;
 
             fsumvio += vio;
-            fprintf(stderr, " ++ %.3f, %.3f %.3f ", fsum, fs2, -vio);
+            fprintf(stderr, " ++  ");
         }
         m_iLastUpdated = ii;
     }
@@ -591,7 +592,7 @@ int CPattern::AlignClass(int iClass, CModel* pModel)
         CSetOfSeq* pSS = shapes[j];
         CAlignment align;
         pMatch->Match(m_original, pSS, &align, pModel);
-        fprintf(stderr, "[%d %d %f] ", iClass, j, align.m_fScore);
+//        fprintf(stderr, "[%d %d %f] ", iClass, j, align.m_fScore);
         aligns.push_back(align);
     }
     sortedaligns.clear();
@@ -625,21 +626,24 @@ double CPattern::GetLabelPhi(double* pw, int iParamDim, CModel* pModel)
     return GetClassPhi(pw, iParamDim, m_original->m_iClassID, pModel);
 }
 
-double CPattern::GetDecoyPhi(double* pw, int iParamDim, CModel* pModel)
+int CPattern::GetDecoyPhi(double* pw, int iParamDim, CModel* pModel)
 {
     double* tmp = new double[iParamDim];
     double fmaxscore = -1;
+    int maxClass = -1;
     for (int i = 0; i < m_iTotalClass; i ++)
     {
         if (i == m_original->m_iClassID) continue;
         double fscore = GetClassPhi(tmp, iParamDim, i, pModel);
         if (fscore > fmaxscore)
         {
+            fmaxscore = fscore;
             memcpy(pw, tmp, sizeof(double)*iParamDim);
+            maxClass = i;
         }
           
     }
-    return fmaxscore;
+    return maxClass;
 }
   
 
@@ -751,7 +755,7 @@ int CStructureLearning::Learn(const char* outputfile)
             fprintf(stderr, "%d iteration %d step \n", iIteration, iStep);
             fprintf(stderr, "active patterns %d (out of %d)\n", m_Sample.GetActiveNum(), m_Sample.m_vPatterns.size());
             pre = fepsilon;
-            fepsilon =  m_Sample.UpdateConstraint(&CC, &m_Model, true, m_iMinNewConstraint, iNumVio);
+            fepsilon =  m_Sample.UpdateConstraint(&CC, &m_Model, true, m_iMinNewConstraint, iNumVio, m_fEpsilon);
             if (fepsilon > 0)
             {
                 CC.PrintMathProg("tmp.mod");

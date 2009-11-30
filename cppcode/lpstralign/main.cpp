@@ -7,8 +7,10 @@
 #include "lp.h"
 #include <glpk.h>
 #include "cmdline.h"
+#include "app.h"
 
 int Train();
+int Match();
 int Test();
 int Convert();
 int Convert2();
@@ -29,7 +31,7 @@ CCmdArgString arg_path = CCmdArgString('p', "path", "", "", "data path, default 
 CCmdArgString arg_input = CCmdArgString('i', "input", "input", "input", "inputfile");
 
 CTaskItem itm_train = CTaskItem( "build models using structural linear programming",
-	"train", Train, 10,
+	"train", Train, 11,
 	&arg_datafile,
 	&arg_patternfile,
 	&arg_modelfile,
@@ -44,13 +46,17 @@ CTaskItem itm_train = CTaskItem( "build models using structural linear programmi
 	&arg_minNewConstraint,
 	&arg_binary);
 CTaskItem itm_test = CTaskItem( "test models using structural linear programming",
-        "test", Test, 5,
+        "test", Test, 6,
         &arg_datafile,
         &arg_modelfile,
         &arg_knn,
         &arg_path,
         &arg_outputfile,
         &arg_binary);
+CTaskItem itm_match = CTaskItem( "match two shapes: usage: match [options] shape1.mss shape2.mss",
+	"match", Match, 2,
+	&arg_modelfile,
+	&arg_binary);
 
 CTaskItem itm_convert = CTaskItem( "Convert txt file to binary file",
 	"convert", Convert, 2,
@@ -63,7 +69,7 @@ CTaskItem itm_convert2 = CTaskItem( "Convert binary file to text file",
 	&arg_outputfile
 	);
 
-CParser parser = CParser("lpstralign",4, &itm_train, &itm_test, &itm_convert, &itm_convert2);
+CParser parser = CParser("lpstralign",5, &itm_train, &itm_test, &itm_match, &itm_convert, &itm_convert2);
 
 
 int Convert()
@@ -95,6 +101,17 @@ int Train()
 	s1.Learn(arg_outputfile);
 	return 0;
 }
+
+int Match()
+{
+    if (parser.GetArgNum() != 2)
+    {
+       parser.DisplayTaskDetails();    
+       return 0;
+    }       
+    match2shapes(parser[0], parser[1], arg_modelfile);
+    return 0;
+}
 int Test()
 {
 /*
@@ -111,7 +128,7 @@ int Test()
 int main( int argc, char* argv[] )
 {
 
-	parser.SetVersion("---------------------------------------\nLongbin Chen, longbinc@yahoo.com, 10/29/2009");
+	parser.SetVersion("---------------------------------------\nLongbin Chen, longbinc@yahoo.com, 11/29/2009");
 	if (parser.Parse(argc,argv))
 	{
 		parser.Run();
