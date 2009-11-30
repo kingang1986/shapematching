@@ -13,7 +13,7 @@ WRAPS = $(SRCS:%.cpp=%_wrap.o)
 
 all: $(PROG) 
 $(PROG): main.o $(OBJS)
-	g++ -g -o $(PROG) main.o sequence.o Data.o lp.o SW.o -L/net/irdev22/export/crawlspace/longbin/install/glpk/lib  -lpthread -lglpk 
+	g++ -g -o $(PROG) main.o sequence.o  model.o alignment.o lp.o SW.o -L/net/irdev22/export/crawlspace/longbin/install/glpk/lib  -lpthread -lglpk 
 SW.o: SW.cpp 
 	g++ -g -c -Wall SW.cpp
 sequence.o: sequence.cpp

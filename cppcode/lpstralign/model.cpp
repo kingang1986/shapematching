@@ -17,6 +17,7 @@ CModel::CModel()
     m_vGap = NULL;
     m_vSign = NULL;
     m_vTheta = NULL;
+
 }
 
 CModel::~CModel()
@@ -78,11 +79,11 @@ int CModel::Write(const char* strFile)
 int CModel::Read(const char* strFile)
 {
 
+    fprintf(stderr, "Reading struct model from %s", strFile);
     Release();
 
     int itotaline = count_line(strFile);
     char line[32768];
-    //fprintf(stderr, "Reading struct model ...");
     FILE* fp = fopen(strFile, "r");
     if (fp == NULL)
     {
@@ -98,7 +99,7 @@ int CModel::Read(const char* strFile)
     {
         int idx, maptype, matchgap,  wid;
         fscanf(fp, "%d %d %d %d", &idx, &wid, &maptype, &matchgap);
-        //fprintf(stderr, "%f %d %d %d %d",idx, wid, maptype, matchgap);
+   //     fprintf(stderr, "%d %d %d %d",idx, wid, maptype, matchgap);
         if (wid > maxWeightIndex) maxWeightIndex = wid;
         m_vFeatureIndex[i] = idx;
         m_vWeightIndex[i] = wid;
@@ -109,26 +110,26 @@ int CModel::Read(const char* strFile)
     }
 
     m_iParamDim = maxWeightIndex + 1;
-    fprintf(stderr, "param dim = %d\n",m_iParamDim);
+    //fprintf(stderr, "param dim = %d\n",m_iParamDim);
     m_iMapNum = itotaline - 3;
     m_vWeight = new double[m_iParamDim];
     for (int i = 0; i < m_iParamDim; i ++)
     {
         float w;
         fscanf(fp, "%f", &w);
-        fprintf(stderr, "%f\t", w);
+        //fprintf(stderr, "%f\t", w);
         m_vWeight[i] = w;
     }
-    fprintf(stderr, "\nsign of each weight\n");
+    //fprintf(stderr, "\nsign of each weight\n");
     for (int i = 0; i < m_iParamDim; i ++)
     {
         int w;
         fscanf(fp, "%d", &w);
-        fprintf(stderr, "%d\t", w);
+     //   fprintf(stderr, "%d\t", w);
         m_vSign[i] = w;
     }
     fclose(fp);
-    fprintf(stderr, "\ndone\n");
+    fprintf(stderr, "done\n");
 
     //build
     m_vMatch = new int[matchcount];
@@ -149,10 +150,7 @@ int CModel::Read(const char* strFile)
     m_iMatchCount = matchcount;
     m_iGapCount = gapcount;
 
-    return m_iParamDim;
-
-}
-
+    return m_iParamDim; } 
 void CModel::Release()
 {
     if (m_vWeight != NULL)
@@ -188,12 +186,17 @@ void CModel::Release()
         delete [] m_vSign;
     }
     m_vWeight = NULL;
-    m_vMatch = m_vGap = NULL;
     m_vFeatureIndex = NULL;
     m_vWeightIndex = NULL;
     m_vMatchOrGap = NULL;
-    m_vSign  = NULL;
     m_vTheta = NULL;
+    m_vMatch  = NULL;
+    m_vGap = NULL;
+    m_vSign  = NULL;
+    m_vGap = NULL;
+    m_vSign = NULL;
+    
+//    fprintf(stderr, "Released\n");
     return ;
 }
 
