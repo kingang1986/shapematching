@@ -31,7 +31,7 @@ public:
          m_pSS1 = m_pSS2 = NULL;
          m_model = NULL;
     }   
-    ~CSWMatch();
+    ~CSWMatch(){};
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel);
     double Match(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
 

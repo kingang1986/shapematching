@@ -27,7 +27,7 @@ public:
     void   AlignHomolog(CModel* pModel);
     int    AlignClass(int iClassId, CModel* pModel);
     double GetLabelPhi(double*, int iParamDim, CModel*);
-    double GetDecoyPhi(double*, int iParamDim, CModel*);
+    int GetDecoyPhi(double*, int iParamDim, CModel*);
     double GetLabelLoss(CModel*);
 
     double Classify(CModel* pModel) ;
@@ -92,7 +92,7 @@ public: //members
     int AlignHomolog(CModel* pModel);
     int Classify(CModel* pModel, const char* outputfile);
 
-    double UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio);
+    double UpdateConstraint(CConstraints* pCC, CModel* pModel, bool bActiveOnly, int iMinNewConstraint, int& iNumVio, double fEpsilon);
 
     //active patterns
     vector<int> m_vActive;
