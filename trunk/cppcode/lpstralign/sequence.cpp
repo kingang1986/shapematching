@@ -1,7 +1,7 @@
-#include "Data.h"
 #include <cstdlib>
 #include <string.h>
 #include <stdio.h>
+#include "sequence.h"
 
 
 void chompstr(char* line)

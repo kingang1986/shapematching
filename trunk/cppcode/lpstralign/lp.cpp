@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <string.h>
 #include <stdlib.h>
-#include "Data.h"
+#include "sequence.h"
+#include "model.h"
+#include "alignment.h"
 #include "SW.h"
 #include "lp.h"
 #include "math.h"

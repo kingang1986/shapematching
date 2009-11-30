@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "Data.h"
 #include "SW.h"
 #include "lp.h"
 #include <glpk.h>

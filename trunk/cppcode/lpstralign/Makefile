@@ -28,28 +28,14 @@ main.o: main.cpp
 	g++ -g -Wall -I/net/irdev22/export/crawlspace/longbin/install/glpk/include -c main.cpp
 clean:
 	rm -rf *~ $(OBJS) $(PROG) ${SWIGS} ${WRAPS} main.o _sequence.so
-mss: mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o  
+python: mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o  
 	g++ -shared mss_wrap.o sequence_swig.o model_swig.o alignment_swig.o -o _mss.so
-python: sequence_wrap.o sequence_swig.o  model_wrap.o model_swig.o alignment_wrap.o alignment_swig.o 
-	g++ -shared sequence_wrap.o sequence_swig.o model_wrap.o model_swig.o alignment_wrap.o alignment_swig.o -o _mss.so
-sequence_wrap.o: sequence_wrap.cpp
-	gcc -fPIC -c sequence_wrap.cpp -o sequence_wrap.o -I/usr/include/python2.6
 sequence_swig.o: sequence.cpp
 	gcc -fPIC -c sequence.cpp -o sequence_swig.o 
-sequence_wrap.cpp: sequence.i
-	swig -c++ -python -o sequence_wrap.cpp sequence.i
-model_wrap.o: model_wrap.cpp
-	gcc -fPIC -c model_wrap.cpp -o model_wrap.o -I/usr/include/python2.6
 model_swig.o: model.cpp
 	gcc -fPIC -c model.cpp -o model_swig.o 
-model_wrap.cpp: model.i
-	swig -c++ -python -o model_wrap.cpp model.i
-alignment_wrap.o: alignment_wrap.cpp
-	gcc -fPIC -c alignment_wrap.cpp -o alignment_wrap.o -I/usr/include/python2.6
 alignment_swig.o: alignment.cpp
 	gcc -fPIC -c alignment.cpp -o alignment_swig.o 
-alignment_wrap.cpp: alignment.i
-	swig -c++ -python -o alignment_wrap.cpp alignment.i
 mss_wrap.o: mss_wrap.cpp
 	gcc -fPIC -c mss_wrap.cpp -o mss_wrap.o -I/usr/include/python2.6
 mss_wrap.cpp: mss.i
