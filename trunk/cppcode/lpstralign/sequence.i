@@ -1,4 +1,4 @@
-%module sequence 
+%module mss 
 %{
 #include "sequence.h"
 %}

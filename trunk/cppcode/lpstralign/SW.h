@@ -1,7 +1,9 @@
 #ifndef SW_H_
 #define SW_H_
 #include <vector>
-#include "Data.h"
+#include "sequence.h"
+#include "model.h"
+#include "alignment.h"
 #include <map>
 
 
