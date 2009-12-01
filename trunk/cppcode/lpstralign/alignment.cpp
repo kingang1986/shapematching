@@ -11,6 +11,7 @@ CAlignment::CAlignment()
 {
     m_pSS1 = m_pSS2 = NULL;
     m_fScore = 0.0;
+    m_iLayerCount = 0;
 }
 
 CAlignment::~CAlignment()
@@ -47,8 +48,10 @@ double CAlignment::AddAlignment(CAlignment& align)
         m_SeqIndex2.push_back(align.m_SeqIndex2[i]);
         m_PointIndex1.push_back(align.m_PointIndex1[i]);
         m_PointIndex2.push_back(align.m_PointIndex2[i]);
+        m_layer.push_back(m_iLayerCount);
     }
     m_fScore += align.m_fScore;
+    m_iLayerCount ++;
     return m_fScore;
 
 }
@@ -64,8 +67,8 @@ double CAlignment::GetPhi(double* phi, int iParamDim, CModel* model)
       DATATYPE* b;
 
       try{
-         a = m_pSS1->m_vSeqs[m_SeqIndex1[i]]->GetPoint(m_PointIndex1[i]);
-         b = m_pSS2->m_vSeqs[m_SeqIndex2[i]]->GetPoint(m_PointIndex2[i]);
+         a = m_pSS1->m_vSeqs[m_SeqIndex1[i]]->GetPointValue(m_PointIndex1[i]);
+         b = m_pSS2->m_vSeqs[m_SeqIndex2[i]]->GetPointValue(m_PointIndex2[i]);
       }catch(...)
       {
           fprintf(stderr, "%d %d",i,  m_SeqIndex2[i]);

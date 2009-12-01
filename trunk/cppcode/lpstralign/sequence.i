@@ -12,7 +12,7 @@ public:
     int Allocate(int nPoint, int nFeatureDim);
     void Release();
     void SetPointValue(int iPoint, DATATYPE* vFeature);
-    DATATYPE* GetPoint(int iIndex);
+    DATATYPE* GetPointValue(int iIndex);
 
 //data
 public: 

@@ -39,6 +39,9 @@ public:
     vector<int> m_PointIndex1;
     vector<int> m_PointIndex2;
     vector<int> m_operation;
+    vector<int> m_layer;
     double m_fScore;
+protected:
+    int m_iLayerCount;
 };
 #endif
