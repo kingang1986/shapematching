@@ -22,7 +22,8 @@ int CAlignment::GetOperNum() { return (int) m_operation.size();}
 int CAlignment::GetOper(int iIndex, int& oper, int& seq1, int& seq2, int& pt1, int&pt2)
 {
     oper = seq1 = seq2 = pt1 = pt2 = -1;
-    if (iIndex < 0 || iIndex > m_operation.size()) return -1;
+    if (iIndex < 0 || iIndex > (int)m_operation.size()) 
+          return -1;
     oper = m_operation[iIndex];
     seq1 = m_SeqIndex1[iIndex];
     seq2 = m_SeqIndex2[iIndex];
@@ -170,7 +171,7 @@ double CAlignment::GetPhi(double* phi, int iParamDim, CModel* model)
 
 void CAlignment::GetBound(int& start1, int& end1, int& start2, int& end2)
 {
-/*    for (int i = 0; i < (int)m_PointIndex1.size(); i ++)
+    for (int i = 0; i < (int)m_PointIndex1.size(); i ++)
     {
         printf("%d ", m_PointIndex1[i]);
     }
@@ -181,7 +182,6 @@ void CAlignment::GetBound(int& start1, int& end1, int& start2, int& end2)
         printf("%d ", m_PointIndex2[i]);
     }
     printf("\n");
-*/
     end1    = m_PointIndex1[0];
     start1  = m_PointIndex1[m_PointIndex1.size() - 1];
     end2 = m_PointIndex2[0];
