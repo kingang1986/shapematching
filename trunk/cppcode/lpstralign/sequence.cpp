@@ -163,6 +163,7 @@ int CSequence::AddPoint(CMSSPoint* pt)
 {
     m_vPoints.push_back(pt);
     m_vFeature.push_back(pt->m_pFeature);
+    return (int) m_vPoints.size();
 }
 
 /////////////////////////////////////////////////////////////
@@ -181,13 +182,11 @@ CSetOfSeq::CSetOfSeq(const char* strDataFile)
 {
     CSetOfSeq();
     LoadSS(strDataFile);
-    return 1;
+
 } 
 CSetOfSeq::CSetOfSeq(const CSetOfSeq& ss)
 {
     m_iSeqIds = ss.m_iSeqIds;
-    m_iSeqNum = ss.m_iSeqNum;
-    m_iFeatureDim = ss.m_iFeatureDim;   
     m_iTotalPoint = ss.m_iTotalPoint;
     for (int i = 0; i < (int) ss.m_vSeqs.size(); i ++)
     {
@@ -195,6 +194,7 @@ CSetOfSeq::CSetOfSeq(const CSetOfSeq& ss)
         m_vSeqs.push_back(pSeq); 
     }
     m_iClassID = ss.m_iClassID;
+    m_iShapeID = ss.m_iShapeID;
     
 }
 
@@ -216,6 +216,34 @@ CSetOfSeq::~CSetOfSeq()
     Release();
 }
 
+int CSetOfSeq::GetX(int iSeq, int iPt)
+{
+    double x =-1;
+    if (iSeq < (int) m_vSeqs.size())
+    {
+        CSequence* pSeq = m_vSeqs[iSeq];
+        if (iPt < pSeq->GetPointNum())
+        {
+            x = pSeq->m_vPoints[iPt]->m_fX;
+            return x;
+        }
+    }
+    return x;
+}
+int CSetOfSeq::GetY(int iSeq, int iPt)
+{
+    double y =-1;
+    if (iSeq < (int) m_vSeqs.size())
+    {
+        CSequence* pSeq = m_vSeqs[iSeq];
+        if (iPt < pSeq->GetPointNum())
+        {
+            y = pSeq->m_vPoints[iPt]->m_fY;
+            return y;
+        }
+    }
+    return y;
+}
 int CSetOfSeq::GetXY(int iSeq, int iPt, float& x, float& y)
 {
     x = y = -1;
@@ -303,8 +331,8 @@ int CSetOfSeq::RemoveShortSeqs(int iMinLen)
       else
         ++iter;
     }
-    Update();
-    return m_iSeqNum;
+    UpdateTotalPoints();
+    return (int) m_vSeqs.size();
 
 }
 
@@ -421,7 +449,7 @@ int CSetOfSeq::LoadSS(const char* strFile)
             if (strlen(line) > 1)
             {
                 memcpy(tmp, line, 32768);
-                CMSSPoint* newpt = CMSSPoint();
+                CMSSPoint* newpt = new CMSSPoint();
                 newpt->m_iOriginalSeqIdx = pSeq->m_iID;
                 newpt->m_iOriginalPtIdx = j; 
            
@@ -438,7 +466,7 @@ int CSetOfSeq::LoadSS(const char* strFile)
 //            fprintf(stderr, "\n%d %d %f %f", seq, ptn, x, y);
                 newpt->m_fX = x;
                 newpt->m_fY = y;
-                newpt->Allocate(m);
+                newpt->Allocate();
                 for (int k = 0; k < CMSSPoint::m_iFeatureDim; k ++)
                 {
                     pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
@@ -447,11 +475,10 @@ int CSetOfSeq::LoadSS(const char* strFile)
                 pSeq->AddPoint(newpt);
             }
         }
-        m_vSeqs.push_back(pSeq);
         m_iTotalPoint += vSeqLength[i];
     }
     fclose(f);
-    Update();
+    UpdateTotalPoints();
     return m_iTotalPoint;
 
 }
@@ -500,8 +527,8 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
         CSequence* pSeq1 = new CSequence();
         for (int i = 0; i < iSplitPos1; i ++)
         {
-            pSeq1->m_vFeature[i] = m_vSeq[iSeqIndex]->m_vFeature[i];
-            pSeq1->m_vPoints[i] = m_vSeq[iSeqIndex]->m_vPoints[i];
+            pSeq1->m_vFeature.push_back(m_vSeqs[iSeqIndex]->m_vFeature[i]);
+            pSeq1->m_vPoints.push_back(m_vSeqs[iSeqIndex]->m_vPoints[i]);
         }
         AddSequence(pSeq1);
         
@@ -512,8 +539,8 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
     
         for (int i = iSplitPos2 + 1; i < iLen; i ++)
         {
-            pSeq2->m_vFeature[i - iSplitPos2 - 1] = m_vSeq[iSeqIndex]->m_vFeature[i];
-            pSeq2->m_vPoints[i - iSplitPos2 - 1] = m_vSeq[iSeqIndex]->m_vPoints[i];
+            pSeq2->m_vFeature.push_back(m_vSeqs[iSeqIndex]->m_vFeature[i]);
+            pSeq2->m_vPoints.push_back(m_vSeqs[iSeqIndex]->m_vPoints[i]);
         }
         AddSequence(pSeq2);
     }
@@ -521,6 +548,6 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
     delete  pSeq;
     UpdateTotalPoints();
  //   fprintf(stderr, " total %d seqs\n", m_vSeqs.size());
-    return m_iSeqNum; 
+    return (int) m_vSeqs.size();
  
 }

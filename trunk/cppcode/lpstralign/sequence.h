@@ -23,19 +23,20 @@ public:
     DATATYPE* m_pFeature;
     DATATYPE  m_fX;
     DATATYPE  m_fY;
-    int Allocate(int iFeatureDim)
+    int Allocate()
     {
-        if (m_iFeatureDim != 0 && m_iFeatureDim != iFeatureDim)
+       
+        if (m_iFeatureDim <= 0)
         {
-            fprintf(stderr, "Feature dimemsion inconsistant %d %d . ", m_iFeatureDim, iFeatureDim);
+            fprintf(stderr, "Feature dimemsion inconsistant %d . ", m_iFeatureDim);
             exit(0);
         }
         if (m_pFeature != NULL)
         {
             delete [] m_pFeature;
         }
-        m_pFeature  = new DATATYPE[iFeatureDim];
-        m_iFeatureDim = iFeatureDim;
+        m_pFeature  = new DATATYPE[m_iFeatureDim];
+        return m_iFeatureDim;
     }
 
     int     m_iOriginalSeqIdx;
@@ -59,8 +60,8 @@ public:
     vector<CMSSPoint*> m_vPoints; // own the points;
     int m_iID;
 
-    int m_iOriginalSeqId; 
-    int m_iStartPos;
+    //int m_iOriginalSeqId; 
+    //int m_iStartPos;
 };
 
 class CSetOfSeq
@@ -83,6 +84,8 @@ public:
     int SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2);
     int RemoveShortSeqs(int iMinLen);
     int GetXY(int iSeq, int iPt, float& x, float& y);
+    int GetX(int iSeq, int iPt);
+    int GetY(int iSeq, int iPt);
     int GetSeqNum() { return (int) m_vSeqs.size(); }
     int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum();}
 

@@ -16,7 +16,6 @@ public:
     void    GetBound(int& start1, int& end1, int& start2, int& end2);
     int GetOperNum();
     int GetOper(int iIndex, int& OUTPUT, int& OUTPUT, int& OUTPUT, int&OUTPUT, int& OUTPUT);
-    
     CSetOfSeq* m_pSS1;
     CSetOfSeq* m_pSS2;
     

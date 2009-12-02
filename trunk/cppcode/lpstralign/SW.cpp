@@ -89,10 +89,32 @@ double CSWMatch::getGapCost(DATATYPE* a, CModel* model)
     // return f; //debug
 }
 
-double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
+double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model, bool bTwoWay)
+{
+    if (bTwoWay)   
+    {
+        CAlignment* pAl = new CAlignment(); 
+        CSequence* pRevB = new CSequence(*pSeqB);
+        pRevB->Reverse();
+        double f = MatchSequenceOneWay(pSeqA, pRevB, pAl, model);
+        double f1 =  MatchSequenceOneWay(pSeqA, pSeqB, pAlign, model);
+        if (f > f1)
+        {
+             *pAlign = *pAl; // use default copy
+             return f;
+        }
+        return f1;
+        
+    }
+    else 
+    {
+        return MatchSequenceOneWay(pSeqA, pSeqB, pAlign, model);
+    }
+    return 0.0;
+}
+double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
 {
 
-    //allocate nodes
 //    fprintf(stderr, "oper (%d,  %d), (%d, %d)\n",  pSeqA->m_iOriginalSeqId, pSeqA->m_iStartPos, pSeqB->m_iOriginalSeqId, pSeqB->m_iStartPos);
 
     CSWNode ** S;
@@ -225,7 +247,7 @@ void CSWMatch::RemoveTable(int shapei, int shapej)
         }
 }
 
-void CSWMatch::UpdateMatching()
+void CSWMatch::UpdateMatching(bool bTwoWay)
 {
     for (int i = 0; i < m_pSS1->GetSeqNum(); i ++)
     {
@@ -242,7 +264,7 @@ void CSWMatch::UpdateMatching()
 //            fprintf(stderr, "(%d, %d) ", p.first, p.second);
             if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
             {
-                MatchSequence(pS1, pS2, pAlign, m_model);
+                MatchSequence(pS1, pS2, pAlign, m_model, bTwoWay);
                 m_mapCachedMatching[p] = pAlign;
             }
         }
@@ -250,7 +272,7 @@ void CSWMatch::UpdateMatching()
     return; 
 }
 
-double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model)
+double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay)
 {
     m_pOSS1 = pSS1;
     m_pOSS2 = pSS2;
@@ -258,8 +280,8 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     m_pSS2 = new CSetOfSeq(*pSS2);
     m_model = model;
 
-    m_pSS1->RemoveShortSeqs(3);
-    m_pSS2->RemoveShortSeqs(3);
+//    m_pSS1->RemoveShortSeqs(3);
+//    m_pSS2->RemoveShortSeqs(3);
 
     UpdateMatching();
     double fTotalScore = 0;
@@ -267,11 +289,11 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     pASet->m_pSS2 = pSS2;
     while (m_pSS1->GetSeqNum() > 0 && m_pSS2->GetSeqNum() > 0)
     {
-//        fprintf(stderr, "\nmatching (%d seq  %d seq )", m_pSS1->GetSeqNum(), m_pSS2->GetSeqNum());
- //      for (int kk = 0; kk < m_pSS1->GetSeqNum(); kk ++)
-  //            fprintf(stderr, " (seq %d, id %d : %d ) ", kk, m_pSS1->m_vSeqs[kk]->m_iID, m_pSS1->m_vSeqs[kk]->GetPointNum());
-   //    for (int kk = 0; kk < m_pSS2->GetSeqNum(); kk ++)
-    //       fprintf(stderr, " (seq %d, id %d : %d ) ", kk, m_pSS2->m_vSeqs[kk]->m_iID, m_pSS2->m_vSeqs[kk]->GetPointNum());
+        fprintf(stderr, "\nmatching (%d seq  %d seq )", m_pSS1->GetSeqNum(), m_pSS2->GetSeqNum());
+        for (int kk = 0; kk < m_pSS1->GetSeqNum(); kk ++)
+            fprintf(stderr, " (seq %d, id %d : %d ) ", kk, m_pSS1->m_vSeqs[kk]->m_iID, m_pSS1->m_vSeqs[kk]->GetPointNum());
+        for (int kk = 0; kk < m_pSS2->GetSeqNum(); kk ++)
+            fprintf(stderr, " (seq %d, id %d : %d ) ", kk, m_pSS2->m_vSeqs[kk]->m_iID, m_pSS2->m_vSeqs[kk]->GetPointNum());
  
         double fMaxScore = -1;
         int bestP1 = 0, bestP2 = 0;
@@ -301,10 +323,10 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
         m_pSS1->SplitSeqByID(bestP1, start1, end1); 
         m_pSS2->SplitSeqByID(bestP2, start2, end2); 
         RemoveTable(bestP1, bestP2);
-      //  fprintf(stderr, "(%d %d %d %d %f %f)\n ", m_pSS1->GetSeqNum(),m_pSS2->GetSeqNum(), bestP1, bestP2,fMaxScore, fTotalScore);
-        m_pSS1->RemoveShortSeqs(3);
-        m_pSS2->RemoveShortSeqs(3);
-       // fprintf(stderr, "(%f %d %d  %d %d )\n", fMaxScore, start1, end1, start2, end2); 
+        fprintf(stderr, "(%d %d %d %d %f %f)\n ", m_pSS1->GetSeqNum(),m_pSS2->GetSeqNum(), bestP1, bestP2,fMaxScore, fTotalScore);
+ //       m_pSS1->RemoveShortSeqs(3);
+ //       m_pSS2->RemoveShortSeqs(3);
+        fprintf(stderr, "(%f %d %d  %d %d )\n", fMaxScore, start1, end1, start2, end2); 
         UpdateMatching();
     }
     ReleaseMatchingTable();
