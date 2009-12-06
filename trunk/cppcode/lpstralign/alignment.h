@@ -29,7 +29,11 @@ public:
     double  GetPhi(double* phi, int iParamDim, CModel* model);
     void    GetBound(int& start1, int& end1, int& start2, int& end2);
     int GetOperNum();
-    int GetOper(int iIndex, int& oper, int& seq1, int& seq2, int&pt1, int& pt2);
+#ifndef SWIG
+    int GetOper(int iIndex, int& oper, int& seq1, int& seq2, int&pt1, int& pt2, int& layer);
+#else
+    int GetOper(int iIndex, int& OUTPUT, int& OUTPUT, int& OUTPUT, int& OUTPUT, int& OUTPUT, int& OUTPUT);
+#endif
     
     CSetOfSeq* m_pSS1;
     CSetOfSeq* m_pSS2;
@@ -41,6 +45,7 @@ public:
     vector<int> m_operation;
     vector<int> m_layer;
     double m_fScore;
+    int m_iStart1, m_iEnd1, m_iStart2, m_iEnd2;
 protected:
     int m_iLayerCount;
 };
