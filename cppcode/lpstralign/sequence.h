@@ -58,10 +58,10 @@ public:
     vector<DATATYPE*> m_vFeature; // just reference, memory managed by CMSSPoint
 
     vector<CMSSPoint*> m_vPoints; // own the points;
-    int m_iID;
 
-    //int m_iOriginalSeqId; 
-    //int m_iStartPos;
+    int m_iID;
+    bool m_bOwner;
+
 };
 
 class CSetOfSeq
@@ -83,7 +83,11 @@ public:
     int SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2);
     int SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2);
     int RemoveShortSeqs(int iMinLen);
+#ifdef SWIG
+    int GetXY(int iSeq, int iPt, float& OUTPUT, float& OUTPUT);
+#else
     int GetXY(int iSeq, int iPt, float& x, float& y);
+#endif
     int GetX(int iSeq, int iPt);
     int GetY(int iSeq, int iPt);
     int GetSeqNum() { return (int) m_vSeqs.size(); }

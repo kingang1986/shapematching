@@ -105,6 +105,7 @@ CMSSPoint::~CMSSPoint()
 /////////////////////////////////////////////////////////////
 CSequence::CSequence()
 {
+   m_bOwner = true;
 }
 
 CSequence::CSequence(const CSequence& seq) // shallow copy
@@ -115,8 +116,7 @@ CSequence::CSequence(const CSequence& seq) // shallow copy
         m_vFeature.push_back(seq.m_vFeature[i]);
     }
     m_iID = seq.m_iID;
-    m_iOriginalSeqId = seq.m_iOriginalSeqId;
-    m_iStartPos = seq.m_iStartPos;
+    m_bOwner = false;
    
 
 }
@@ -127,10 +127,13 @@ CSequence::~CSequence()
 
 void CSequence::Release()
 {
-    for (int i = 0; i < GetPointNum(); i ++)
+    if (m_bOwner)
     {
-        CMSSPoint* pt = m_vPoints[i];
-        delete pt;
+        for (int i = 0; i < GetPointNum(); i ++)
+        {
+            CMSSPoint* pt = m_vPoints[i];
+            delete pt;
+        }
     }
     m_vPoints.clear();
     return ;
@@ -514,13 +517,11 @@ void CSetOfSeq::UpdateTotalPoints()
     }
     return; 
 }
-
+//sqq
 int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
 {
     CSequence* pSeq = m_vSeqs[iSeqIndex];
-    //iSplitPos1 -= pSeq->m_iStartPos;
-    //iSplitPos2 -= pSeq->m_iStartPos;
-//    fprintf(stderr, "split %d (len %d ) from %d to %d \n", iSeqIndex, pSeq->m_iPoint, iSplitPos1, iSplitPos2);
+    fprintf(stderr, "split %d (len %d ) from %d to %d \n", iSeqIndex, pSeq->GetPointNum(), iSplitPos1, iSplitPos2);
     int iLen = pSeq->GetPointNum();
     if (iSplitPos1 > 0)
     {
@@ -531,6 +532,7 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
             pSeq1->m_vPoints.push_back(m_vSeqs[iSeqIndex]->m_vPoints[i]);
         }
         AddSequence(pSeq1);
+        pSeq1->m_bOwner = m_vSeqs[iSeqIndex]->m_bOwner;
         
     } 
     if (iSplitPos2 < iLen - 1)
@@ -543,7 +545,10 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
             pSeq2->m_vPoints.push_back(m_vSeqs[iSeqIndex]->m_vPoints[i]);
         }
         AddSequence(pSeq2);
+        pSeq2->m_bOwner = m_vSeqs[iSeqIndex]->m_bOwner;
     }
+    
+    m_vSeqs[iSeqIndex]->m_bOwner = false;
     m_vSeqs.erase(m_vSeqs.begin() + iSeqIndex);
     delete  pSeq;
     UpdateTotalPoints();
