@@ -35,6 +35,9 @@ public:
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
 
 protected:
+    double InitMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay);
+    double CleanUpMatch();
+    double MatchAStep();
     double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
     double MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model, bool bTwoway = false);
     double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model);
@@ -46,8 +49,14 @@ protected:
     CSetOfSeq* m_pOSS2;
     CSetOfSeq* m_pSS1;
     CSetOfSeq* m_pSS2;
+    void UpdateMatching();
+    double m_fTotalScore;
+
     CModel* m_model;
-    void UpdateMatching(bool bTwoWay = false);
+    bool m_bTwoWay;
+    CAlignment* m_pAlign;
+    
+ 
 };
 
 #endif

@@ -18,6 +18,12 @@ class CMSSPoint
 {
 public:
     static int m_iFeatureDim;
+    static const char* GetFeatureName(int iIdx);
+    static int     GetFeatureIdx(const char* ); 
+    static int AddFeature(const char* newf);
+    static vector<string>  m_vFeatureName;
+    
+
 public:
     CMSSPoint();
     virtual ~CMSSPoint();
@@ -43,9 +49,6 @@ public:
     int     m_iOriginalSeqIdx;
     int     m_iOriginalPtIdx;
 
-//    static char* GetFeatureName(int i);
-//    static int     GetFeatureIdx(string); 
-//    static std::map<string, int> m_vFeatureIdx;
 };
 
 class CSequence
@@ -97,6 +100,7 @@ public:
     int GetY(int iSeq, int iPt);
     int GetSeqNum() { return (int) m_vSeqs.size(); }
     int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum();}
+    void SetFeatureValue(int seq, int pt, int idx, DATATYPE value);
 
 public:    
     int m_iTotalPoint;

@@ -84,6 +84,7 @@ char* getnextstring(char* pstart, char* buffer, char delim)
 /////////////////////////////////////////////////////////////
 
 int CMSSPoint::m_iFeatureDim = 0;
+vector<string> CMSSPoint::m_vFeatureName;
 CMSSPoint::CMSSPoint()
 {
    m_pFeature = NULL;
@@ -97,6 +98,30 @@ CMSSPoint::~CMSSPoint()
         delete [] m_pFeature;
     }
     m_pFeature = NULL;
+}
+
+const char* CMSSPoint::GetFeatureName(int iIdx)
+{
+    return m_vFeatureName[iIdx].c_str();
+}
+
+int CMSSPoint::GetFeatureIdx(const char* str)
+{
+    for (int i = 0; i < (int) m_vFeatureName.size(); i ++)
+    {
+        if (strcmp(str, m_vFeatureName[i].c_str()) == 0) 
+        {
+            return i;
+        }
+    } 
+    return -1;
+}
+
+int CMSSPoint::AddFeature(const char* newf)
+{
+    string str = newf; 
+    m_vFeatureName.push_back(str);
+    return (int) m_vFeatureName.size();
 }
 
 
@@ -439,6 +464,23 @@ int CSetOfSeq::LoadSS(const char* strFile)
     m_strFileName = strFile;
     //m_strFileName = "hello"; 
     fgets(line, 32768, f); //head line
+    if (CMSSPoint::m_vFeatureName.size() == 0)
+    {
+        char tmpbuffer[512];
+        char* pbuffer = tmp;
+        pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
+        //int seq = atoi(tmpbuffer);
+        pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
+        //int ptn = atoi(tmpbuffer);
+        pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
+        pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
+        for (int k = 0; k < CMSSPoint::m_iFeatureDim; k ++)
+        {
+            pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
+            fprintf(stderr, "feature: %s.\n", tmpbuffer);
+            CMSSPoint::AddFeature(tmpbuffer);
+        }
+    }
     m_iTotalPoint = 0;
     for (int i = 0; i < (int)vSeqLength.size(); i ++)
     {
@@ -555,4 +597,8 @@ int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
  //   fprintf(stderr, " total %d seqs\n", m_vSeqs.size());
     return (int) m_vSeqs.size();
  
+}
+void CSetOfSeq::SetFeatureValue(int seq, int pt, int idx, DATATYPE value)
+{
+    m_vSeqs[seq]->m_vFeature[pt][idx] = value;
 }
