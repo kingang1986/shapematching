@@ -5,6 +5,7 @@
 #include <string>
 #include "stdlib.h"
 #include "stdio.h"
+#include <map>
 using namespace std;
 
 #define DATATYPE float
@@ -41,6 +42,10 @@ public:
 
     int     m_iOriginalSeqIdx;
     int     m_iOriginalPtIdx;
+
+//    static char* GetFeatureName(int i);
+//    static int     GetFeatureIdx(string); 
+//    static std::map<string, int> m_vFeatureIdx;
 };
 
 class CSequence
@@ -93,12 +98,9 @@ public:
     int GetSeqNum() { return (int) m_vSeqs.size(); }
     int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum();}
 
-//Data
 public:    
-//   int m_iSeqNum;
     int m_iTotalPoint;
     vector<CSequence*> m_vSeqs;
- //   vector<int> m_vSeqLength;
     string m_strFileName;
     int m_iShapeID;
     int m_iClassID;

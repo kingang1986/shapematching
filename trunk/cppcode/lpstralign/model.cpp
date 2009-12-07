@@ -206,6 +206,54 @@ void CModel::InitTheta(int iPatternNum)
     m_iPatternNum = iPatternNum;
 }
 
+void CModel::Default(int iFeatureNum)
+{
+    m_iFeatureDim = iFeatureNum; 
+    m_iParamDim = iFeatureNum + 2;// gap,  b - fx;
+    Init(m_iParamDim);
+    for (int i = 0;i < iFeatureNum; i ++)
+    {
+        m_vWeight[i] = -1.0;
+        m_vMapType[i] = MAPTYPE_UNCHANGE;
+        m_vFeatureIndex[i] = i; 
+        m_vWeightIndex[i] = i; 
+        m_vSign[i] = -1; 
+        m_vMatchOrGap[i] = MAPTYPE_MATCH; 
+    }
+    m_vWeight[iFeatureNum] = 10;
+    m_vMapType[iFeatureNum] = MAPTYPE_CONSTANT;
+    m_vFeatureIndex[iFeatureNum] = -1;
+    m_vWeightIndex[iFeatureNum] = iFeatureNum;
+    m_vSign[iFeatureNum] = 1;
+    m_vMatchOrGap[iFeatureNum] = MAPTYPE_MATCH;
+
+    m_vWeight[iFeatureNum + 1] = -1;
+    m_vMapType[iFeatureNum + 1] = MAPTYPE_CONSTANT;
+    m_vFeatureIndex[iFeatureNum + 1] = -1;
+    m_vWeightIndex[iFeatureNum + 1] = iFeatureNum + 1;
+    m_vSign[iFeatureNum + 1] = -1;
+    m_vMatchOrGap[iFeatureNum + 1] = MAPTYPE_GAP;
+    //build
+    m_vMatch = new int[iFeatureNum + 1];
+    m_vGap = new int[1];
+    int idx1 = 0;
+    int idx2 = 0;
+    for (int i = 0; i < m_iParamDim; i ++)
+    {
+        if (m_vMatchOrGap[i] == MAPTYPE_MATCH)
+        {
+            m_vMatch[idx1] = i; idx1 ++ ;
+        }
+        else if (m_vMatchOrGap[i] == MAPTYPE_GAP)
+        {
+            m_vGap[idx2] = i; idx2 ++;
+        }
+    }
+    m_iMapNum = iFeatureNum + 2;
+    m_iMatchCount = iFeatureNum + 1;
+    m_iGapCount = 1;
+    return;
+}
 void CModel::Init(int iParamDim)
 {
     Release();

@@ -14,6 +14,7 @@ public:
     int Read(const  char* strFile);
     int Write(const char* strFile);
     void Init(int iParamDim);
+    void Default(int iFeatureNum);
     void InitTheta(int iPatternNum);
     void Print();
 
