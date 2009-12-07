@@ -283,6 +283,7 @@ void CSWMatch::UpdateMatching(bool bTwoWay)
 
 double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay)
 {
+    m_mapCachedMatching.clear();
     m_pOSS1 = pSS1;
     m_pOSS2 = pSS2;
     m_pSS1 = new CSetOfSeq(*pSS1);
