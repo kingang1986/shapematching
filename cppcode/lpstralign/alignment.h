@@ -21,8 +21,6 @@ class CModel;
 class CAlignment
 {
 public:
-
-
     CAlignment();
     ~CAlignment();
     double  AddAlignment(CAlignment& align);
