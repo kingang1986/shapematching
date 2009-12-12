@@ -9,10 +9,10 @@ __history__="""
          change file format
     Modified 11/14/2009, by longbinc@yahoo.com
          Allow matching sequences in two directions
-
+         Add Exact MSS matching
     """
 
-import sys, os, string, optparse, fileinput, string, math, numpy
+import sys, os, string, optparse, fileinput, string, math, numpy, copy
 from MSS import *
 from exMSS import *
 from exDAS import * 
@@ -44,16 +44,17 @@ class SmithWaterman:
         self.gapmap = gapmap[:]
         
     def GetSubScore(self, index1, index2):
-    	f = 0.0
-        fkeys = [k for k in self.seq1.points[0].getvalues().keys() if not k.startswith("f")]
+        f = 0.0
+        fkeys = [k for k in self.seq1.points[0].getvalues().keys() if k.startswith("f")]
         d = 0 
         if (self.matchmap == None):
             for k in fkeys: 
-    	        d  =  abs(self.seq1.points[index1].getvalue(k)  -  self.seq2.points[index2].getvalue(k))  
+                d  =  abs(self.seq1.points[index1].getvalue(k)  -  self.seq2.points[index2].getvalue(k))  
                 m  =  abs(self.seq1.points[index1].getvalue(k)) +  abs(self.seq2.points[index2].getvalue(k)) 
                 if ( m > 0):
                     f += d * d  / m 
-        f = 5 - f
+        f = 10 - f
+        #f = 15 - f
         return f
 
     def GetGapScore(self, data1):
@@ -64,14 +65,13 @@ class SmithWaterman:
            for k in L:
                print "%3.3f "%(k),
            print ""              
-
   
     def AlignSeq(self, seq1, seq2):
-    	self.seq1 = seq1
-    	self.seq2 = seq2
-    	self.feature_length = len([f for f in seq1.points[0].getvalues() if f.startswith("f")])
-    	MatchX = []
-    	MatchY = []
+        self.seq1 = seq1
+        self.seq2 = seq2
+        self.feature_length = len([f for f in seq1.points[0].getvalues() if f.startswith("f")])
+        MatchX = []
+        MatchY = []
         matchscores = []
         m = len(seq1.points) 
         n = len(seq2.points)
@@ -130,10 +130,11 @@ class SmithWaterman:
     def Align(self, seq1, seq2, bi_direct = False):
         if (bi_direct):
             aligncost1, alignMatch1, MatchX1, MatchY1, matchscores1 = self.AlignSeq(seq1, seq2)
-            newseq = copy.copy(seq2)
+            newseq = Sequence()
+            newseq.points= seq2.points[:]
             newseq.points.reverse()
             aligncost2, alignMatch2, MatchX2, MatchY2, matchscores2 = self.AlignSeq(seq1, newseq)
-            if (matchscore1 > matchscore2):
+            if (matchscores1 > matchscores2):
                  return  aligncost1, alignMatch1, MatchX1, MatchY1, matchscores1
             else:
                  return  aligncost2, alignMatch2, MatchX2, MatchY2, matchscores2
@@ -143,7 +144,44 @@ class SmithWaterman:
 
 
 class MSS_SW_Exact:
-    def align(self, mss1, mss2):
+
+    def __removeShortSeq(self, mss):
+        seq = mss.seqs[:]
+        mss.seqs = [s for s in seq if len(s.points) > 3]
+
+    def logPointPosition(self, mss):
+        for si, s in enumerate(mss.seqs):
+            for pi, p in enumerate(s.points):
+                p.pt_idx = pi
+                p.seq_idx = si
+
+    def plotMatch(self, fimg1, fimg2, mss1, mss2, bX, bY):
+        im1 = highgui.cvLoadImage(fimg1) 
+        img1 = cv.cvCreateImage(cv.cvGetSize(im1), 8, 3)
+        cv.cvSet(img1, cv.cvScalar(0,0,0))
+        im2 = highgui.cvLoadImage(fimg2) 
+        img2 = cv.cvCreateImage(cv.cvGetSize(im2), 8, 3)
+        cv.cvSet(img2, cv.cvScalar(0,0,0))
+        mss1.paint(img1)
+        mss2.paint(img2)
+        myfont = cv.cvInitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.4, 0.4)
+        ptcount = 0
+        for i in range(len(bX)):
+            if (i/2 == i/2.0): continue
+            xs, xi = bX[i]
+            ys, yi = bY[i]
+            if (xi != -1 and yi != -1):
+                    ptcount  += 2
+                    print xs, xi, ys, yi
+                    cv.cvPutText(img1, str(ptcount), cv.cvPoint(int(mss1.seqs[xs].points[xi].x), int(mss1.seqs[xs].points[xi].y)), myfont,  cv.cvScalar(255,255,255,0))
+                    cv.cvPutText(img2, str(ptcount), cv.cvPoint(int(mss2.seqs[ys].points[yi].x), int(mss2.seqs[ys].points[yi].y)), myfont,  cv.cvScalar(255,255,255,0))
+        highgui.cvShowImage ("shape1", img1)
+        highgui.cvShowImage ("shape2", img2)
+        highgui.cvWaitKey (0)
+        #highgui.cvReleaseImage(img1)
+        #highgui.cvReleaseImage(img2)
+     
+    def align(self, mss1, mss2, bi_direct, tss1,tss2, fimg1, fimg2):
         sumscore = []
         matcher = SmithWaterman()
         idx = -1
@@ -151,35 +189,70 @@ class MSS_SW_Exact:
         bYFinal = []
         bScoreFinal = []
         mC = []
-        for i1, c1 in enumerate(mss1.seqs):
-            idx += 1
-            cscore = -100000000
-            bestcurve = None
-            for i2, c2 in enumerate(mss2.seqs):
-                cost, align, X, Y, mscores = matcher.Align(c1, c2)
-                print X, Y
-                if (cost > cscore):
-                    #print >>sys.stderr, cost, align, len(X), len(Y), len(mscores)
-                    cscore = cost
-                    #print >>sys.stderr, "---------------"
-                    bScore = mscores[:]
-                    bX = []
-                    bY = []
-                    for x in X:
-                       if x != -1: 
-                          bX.append((i1, x))
-                       else:
-                          bX.append((i1, -1))
-                    for y in Y:
-                       if y != -1:
-                          bY.append((i2, y))
-                       else:
-                          bY.append((i2, -1))
-                    bestcurve = c2
-            sumscore.append(cscore)   
-            bXFinal += bX
-            bYFinal += bY
-            bScoreFinal += bScore
+        self.logPointPosition(mss1)
+        self.logPointPosition(mss2)
+        self.__removeShortSeq(mss1)
+        self.__removeShortSeq(mss2)
+        iter = 1
+        cscore = 1
+        if (fimg1 != None and fimg2 != None):
+            highgui.cvNamedWindow ("shape1", 1)
+            highgui.cvNamedWindow ("shape2", 1)
+
+        while len(mss1.seqs) > 0 and len(mss2.seqs) > 0 and cscore > 0:
+            cscore = 0 
+            bc1 = None
+            bc2 = None
+            bScore = 0
+            print "Iteration %d: matching MSS1 (%d seqs) with MSS2(%d seqs)" % ( iter, len(mss1.seqs), len(mss2.seqs))
+            iter += 1
+            for  c1 in mss1.seqs:
+                for  c2 in mss2.seqs:
+                    cost, align, X, Y, mscores = matcher.Align(c1, c2, bi_direct)
+                    if (cost > cscore): 
+                        bX = []
+                        bY = []
+                        bc1 = c1
+                        bc2 = c2
+                        start1 = X[-1]
+                        start2 = Y[-1]
+                        end1 = X[0] + 1
+                        end2 = Y[0] + 1
+                        #start1 = max(0, min(X))
+                        #start2 = max(0, min(Y))
+                        #end1 = max(X)+1
+                        #end2 = max(Y)+1
+                        cscore = cost
+                        bScore = mscores[:]
+                        for x in X:
+                           if x != -1: 
+                               bX.append((c1.points[x].seq_idx, c1.points[x].pt_idx))
+                           else:
+                               bX.append((-1, -1))
+                        for y in Y:
+                           if y != -1:
+                               bY.append((c2.points[y].seq_idx, c2.points[y].pt_idx))
+                           else:
+                               bY.append((-1, -1))
+            if (cscore> 0):
+                print "c1 [%d , %d] c2 [%d %d], score %.3f" % (start1, end1, start2, end2, cscore)
+                print bX, bY
+                ca, cb = bc1.cut_seq(start1, end1)
+                mss1.seqs.remove(bc1)
+                mss1.seqs.append(ca)
+                mss1.seqs.append(cb)
+                ca, cb = bc2.cut_seq(start2, end2)
+                mss2.seqs.remove(bc2)
+                mss2.seqs.append(ca)
+                mss2.seqs.append(cb)
+                self.__removeShortSeq(mss1)
+                self.__removeShortSeq(mss2)
+                sumscore.append(cscore)   
+                bXFinal += bX
+                bYFinal += bY
+                bScoreFinal += bScore
+            if (fimg1 != None and fimg2 != None):
+                self.plotMatch(fimg1, fimg2, tss1, tss2, bXFinal, bYFinal)
         return sumscore, bXFinal, bYFinal,bScoreFinal
 
 class MSS_SW: # MSS Matching using approximate algorithm
@@ -242,38 +315,26 @@ def main():
     if len(args) != 3:
         oparser.parse_args([sys.argv[0], "--help"])
         sys.exit(1)
+    tmss1 = MSS()
+    tmss1.load(args[1])
+    tmss2 = MSS()
+    tmss2.load(args[2])
     mss1 = MSS()
     mss1.load(args[1])
     mss2 = MSS()
     mss2.load(args[2])
-    sw = MSS_SW()
-    sumsc, bX, bY, sfinal =  sw.align(mss1, mss2, options.bidirect)
-    print sumsc[0]
+     
+    
+   
+    sw = MSS_SW_Exact()
+    #sw = MSS_SW()
     if (options.image):
         fimg1, fimg2 = options.image.split(",")
-        im1 = highgui.cvLoadImage(fimg1) 
-        img1 = cv.cvCreateImage(cv.cvGetSize(im1), 8, 3)
-        im2 = highgui.cvLoadImage(fimg2) 
-        img2 = cv.cvCreateImage(cv.cvGetSize(im2), 8, 3)
-        mss1.paint(img1)
-        mss2.paint(img2)
-        myfont = cv.cvInitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5)
-        ptcount = 0
-        for i in range(len(bX)):
-            xs, xi = bX[i]
-            ys, yi = bY[i]
-            if (xi != -1 and yi != -1):
-                    ptcount  += 1
-               
-              #      cv.cvDrawCircle(img1, cv.cvPoint(int(mss1.seqs[xs].points[xi].x), int(mss1.seqs[xs].points[xi].y)),2, [idx])
-                    cv.cvPutText(img1, str(ptcount), cv.cvPoint(int(mss1.seqs[xs].points[xi].x), int(mss1.seqs[xs].points[xi].y)), myfont,  cv.cvScalar(255,255,255,0))
-               #     cv.cvDrawCircle(img2, cv.cvPoint(int(bestcurve[yi].x), int(bestcurve[yi].y)),2, clrs[idx])
-                    cv.cvPutText(img2, str(ptcount), cv.cvPoint(int(mss2.seqs[ys].points[yi].x), int(mss2.seqs[ys].points[yi].y)), myfont,  cv.cvScalar(255,255,255,0))
-        highgui.cvNamedWindow ("contour1", 1)
-        highgui.cvNamedWindow ("contour2", 1)
-        highgui.cvShowImage ("contour1", img1)
-        highgui.cvShowImage ("contour2", img2)
-        highgui.cvWaitKey (0)
+    else:
+        fimg1 = None
+        fimg2 = None
+    sumsc, bX, bY, sfinal =  sw.align(mss1, mss2, options.bidirect, tmss1, tmss2, fimg1, fimg2)
+    print sumsc[0]
     if options.output:
         print bX, bY
         fout = open(options.output, 'w')
