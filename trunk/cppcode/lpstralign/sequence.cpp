@@ -167,15 +167,15 @@ void CSequence::Release()
 void CSequence::Reverse() // inplace reverse 
 {
     int n = GetPointNum(); 
-    for (int i = 0; i < n/2; i ++)
+    for (int i = 0; i <= n/2; i ++)
     {
         CMSSPoint* pt = m_vPoints[i];
-        m_vPoints[i] = m_vPoints[n - i];
-        m_vPoints[n - i] = pt;
-
+        m_vPoints[i] = m_vPoints[n -1 - i];
+        m_vPoints[n - 1 - i] = pt;
+        
         DATATYPE* dt = m_vFeature[i];
-        m_vFeature[i] = m_vFeature[n - i];
-        m_vFeature[n - i] = dt;
+        m_vFeature[i] = m_vFeature[n - 1 - i];
+        m_vFeature[n - 1 - i] = dt;
     }
 
 }
@@ -468,6 +468,8 @@ int CSetOfSeq::LoadSS(const char* strFile)
     {
         char tmpbuffer[512];
         char* pbuffer = tmp;
+        chompstr(line);
+        memcpy(tmp, line, 32768);
         pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
         //int seq = atoi(tmpbuffer);
         pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
@@ -477,7 +479,7 @@ int CSetOfSeq::LoadSS(const char* strFile)
         for (int k = 0; k < CMSSPoint::m_iFeatureDim; k ++)
         {
             pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
-            fprintf(stderr, "feature: %s.\n", tmpbuffer);
+//            fprintf(stderr, "feature: %s.\n", tmpbuffer);
             CMSSPoint::AddFeature(tmpbuffer);
         }
     }

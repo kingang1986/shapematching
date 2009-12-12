@@ -108,7 +108,7 @@ int Match()
        parser.DisplayTaskDetails();    
        return 0;
     }       
-    match2shapes(parser[0], parser[1], arg_modelfile);
+    match2shapes(parser[0], parser[1], arg_modelfile, arg_binary);
     return 0;
 }
 int Test()

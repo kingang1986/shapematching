@@ -100,6 +100,7 @@ public:
     int GetY(int iSeq, int iPt);
     int GetSeqNum() { return (int) m_vSeqs.size(); }
     int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum();}
+    CSequence* GetSeq(int iSeq) { return m_vSeqs[iSeq];}
     void SetFeatureValue(int seq, int pt, int idx, DATATYPE value);
 
 public:    

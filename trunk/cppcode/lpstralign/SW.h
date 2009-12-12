@@ -34,8 +34,7 @@ public:
     ~CSWMatch(){};
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
 
-protected:
-    double InitMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay);
+    double InitMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay = false);
     double CleanUpMatch();
     double MatchAStep();
     double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
