@@ -44,7 +44,14 @@ class Sequence:
             cv.cvDrawCircle(img, p.getCvPoint(), 2, cv.cvScalar(0, 0, 255,0))
         for i in range(len(self.points) - 1):
             cv.cvLine(img, self.points[i].getCvPoint(), self.points[i + 1].getCvPoint(), cv.cvScalar(255,255,255,0), 1)
- 
+    def cut_seq(self, pos1, pos2): # remove the sequence from pos1 to pos2, and return two (rest) sequence 
+        s1 = Sequence()
+        s2 = Sequence()
+        for i in range(pos1):
+            s1.points.append(self.points[i])
+        for j in range(pos2,len(self.points)):
+            s2.points.append(self.points[j])
+        return s1, s2
         
 class MSS:
     def __init__(self):
