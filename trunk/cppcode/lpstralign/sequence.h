@@ -19,15 +19,18 @@ class CMSSPoint
 public:
     static int m_iFeatureDim;
     static const char* GetFeatureName(int iIdx);
-    static int     GetFeatureIdx(const char* ); 
+    static int GetFeatureIdx(const char* ); 
     static int AddFeature(const char* newf);
     static vector<string>  m_vFeatureName;
-    
+   
 
 public:
     CMSSPoint();
     virtual ~CMSSPoint();
+    void Reverse();
     DATATYPE* m_pFeature;
+
+   
     DATATYPE  m_fX;
     DATATYPE  m_fY;
     int Allocate()
@@ -38,16 +41,25 @@ public:
             fprintf(stderr, "Feature dimemsion inconsistant %d . ", m_iFeatureDim);
             exit(0);
         }
-        if (m_pFeature != NULL)
+        if (m_pLFeature != NULL)
         {
-            delete [] m_pFeature;
+            delete [] m_pLFeature;
         }
-        m_pFeature  = new DATATYPE[m_iFeatureDim];
+        m_pLFeature  = new DATATYPE[m_iFeatureDim];
+        if (m_pRFeature != NULL)
+        {
+            delete [] m_pRFeature;
+        }
+        m_pRFeature  = new DATATYPE[m_iFeatureDim];
+        m_pFeature = m_pLFeature; //initially, left way features as the default feature 
         return m_iFeatureDim;
     }
 
     int     m_iOriginalSeqIdx;
     int     m_iOriginalPtIdx;
+
+    DATATYPE* m_pRFeature; //one way feature , feature startswith 'f'
+    DATATYPE* m_pLFeature; //reverse way feature, feature name startswith 'g'
 
 };
 
@@ -101,7 +113,7 @@ public:
     int GetSeqNum() { return (int) m_vSeqs.size(); }
     int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum();}
     CSequence* GetSeq(int iSeq) { return m_vSeqs[iSeq];}
-    void SetFeatureValue(int seq, int pt, int idx, DATATYPE value);
+    void SetFeatureValue(int seq, int pt, int idx, DATATYPE value, int bidirecti = 0); //bidrect : 0->both, 1->left, 2 -. right
 
 public:    
     int m_iTotalPoint;

@@ -220,7 +220,7 @@ void CModel::Default(int iFeatureNum)
         m_vSign[i] = -1; 
         m_vMatchOrGap[i] = MAPTYPE_MATCH; 
     }
-    m_vWeight[iFeatureNum] = 0.1 * iFeatureNum;
+    m_vWeight[iFeatureNum] = 0.5 * iFeatureNum;
     m_vMapType[iFeatureNum] = MAPTYPE_CONSTANT;
     m_vFeatureIndex[iFeatureNum] = -1;
     m_vWeightIndex[iFeatureNum] = iFeatureNum;
