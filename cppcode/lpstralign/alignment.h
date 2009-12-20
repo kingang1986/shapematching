@@ -44,6 +44,7 @@ public:
     vector<int> m_layer;
     double m_fScore;
     int m_iStart1, m_iEnd1, m_iStart2, m_iEnd2;
+    int m_nLength1, m_nLength2; // the lengths of two sequences in matching
 protected:
     int m_iLayerCount;
 };

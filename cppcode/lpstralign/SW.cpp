@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <memory.h>
 #include <stdlib.h>
+#include "shapecontext.h"
 
 using namespace std;
 
@@ -122,12 +123,11 @@ double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* p
 double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
 {
 
-    //fprintf(stderr, "oper (%d,  %d), (%d, %d)\n",  pSeqA->m_iOriginalSeqId, pSeqA->m_iStartPos, pSeqB->m_iOriginalSeqId, pSeqB->m_iStartPos);
-
     CSWNode ** S;
-    //fprintf(stderr, "ttok-1\n");
     int iLengthA = pSeqA->GetPointNum();
     int iLengthB = pSeqB->GetPointNum();
+    pAlign->m_nLength1 = iLengthA;
+    pAlign->m_nLength2 = iLengthB;
     S = new CSWNode*[iLengthA + 1];
     //fprintf(stderr, "length %d %d\n", iLengthA, iLengthB);
     for (int i = 0; i < iLengthA + 1; i++)
@@ -212,6 +212,7 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
     pAlign->m_iStart2 = temp_node->column_index - 1; 
     while (temp_node->prev)
     {
+        if (temp_node->operation<0 || temp_node->operation > 10) fprintf(stderr, "[ERROR] wrong oper %d\n", temp_node->operation);
         pAlign->m_operation.push_back(temp_node->operation);
         if (temp_node->operation == SUBST || temp_node->operation == DELET) 
         {
@@ -286,10 +287,11 @@ void CSWMatch::UpdateMatching()
     int iCount = 0;
     for (int i = 0; i < m_pSS1->GetSeqNum(); i ++)
     {
-        CSequence* pS1 = m_pSS1->m_vSeqs[i];
+        //CSequence* pS1 = m_pSS1->m_vSeqs[i];
+        CSequence* pS1 = m_pSS1->GetSeq(i);
         for (int j = 0; j < m_pSS2->GetSeqNum(); j ++)  
         {
-            CSequence* pS2 = m_pSS2->m_vSeqs[j];
+            CSequence* pS2 = m_pSS2->GetSeq(j);
             CAlignment* pAlign = new CAlignment();
             pAlign->m_pSS1 = m_pOSS1;
             pAlign->m_pSS2 = m_pOSS2;
@@ -299,8 +301,8 @@ void CSWMatch::UpdateMatching()
             if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
             {
                 MatchSequence(pS1, pS2, pAlign, m_model, m_bTwoWay);
-                if (pAlign->m_fScore > 10.0)
-                fprintf(stderr, "(%d (len %d) %d(len %d) -> %.4f)\n", p.first, pS1->GetPointNum(), p.second,pS2->GetPointNum(), pAlign->m_fScore);
+                if (pAlign->m_fScore > 100.0)
+                    fprintf(stderr, "(%d (len %d) %d(len %d) -> %.4f)\n", p.first, pS1->GetPointNum(), p.second,pS2->GetPointNum(), pAlign->m_fScore);
                 m_mapCachedMatching[p] = pAlign;
                 iCount ++;
             }
@@ -310,6 +312,94 @@ void CSWMatch::UpdateMatching()
     return; 
 }
 
+void  CSWMatch::GetRef(vector<int>& ref1, vector<int>& ref2)
+{
+    ref1.clear();
+    ref2.clear();
+  
+    for (int i = 0; i < m_pAlign->GetOperNum(); i ++)
+    {
+       int oper, seq1, seq2, pt1, pt2, layer; 
+       m_pAlign->GetOper(i, oper, seq1, seq2, pt1, pt2, layer);
+//       fprintf(stderr, "oper %d: %d %d %d %d %d %d\n", i, oper,  seq1, seq2, pt1, pt2, layer);
+       if (seq1 >=0 && pt1 >= 0)
+           ref1.push_back(m_pOSS1->GetPointIdx(seq1, pt1));
+       if (seq2 >=0 && pt2 >= 0)
+           ref2.push_back(m_pOSS2->GetPointIdx(seq2, pt2));
+    }
+}
+
+void  CSWMatch::GetMeanDist(float& dist1, float& dist2)
+{
+    float s1 = 0;
+    float s2 = 0;
+    vector<float> x1, y1; 
+    vector<float> x2, y2; 
+    float x, y;
+    for (int i = 0; i < m_pAlign->GetOperNum(); i ++)
+    {
+       int oper, seq1, seq2, pt1, pt2, layer; 
+       m_pAlign->GetOper(i, oper, seq1, seq2, pt1, pt2, layer);
+       if (seq1 >=0 && pt1 >= 0)
+       {
+           m_pOSS1->GetXY(seq1, pt1, x, y);
+           x1.push_back(x); y1.push_back(y);
+       }
+       if (seq2 >=0 && pt2 >= 0)
+       {
+           m_pOSS2->GetXY(seq2, pt2, x, y);
+           x2.push_back(x); y2.push_back(y);
+       }
+    } 
+    for (int i = 0; i <(int) x1.size(); i ++)
+    {
+        for (int j = 0; j < (int) x1.size(); j ++ )
+        {
+             s1 += sqrt((x1[i] - x1[j]) *(x1[i] - x1[j]) + (y1[i] - y1[j]) *(y1[i] - y1[j]));
+//             fprintf(stderr, "%.3f ",  sqrt((x1[i] - x1[j]) *(x1[i] - x1[j]) + (y1[i] - y1[j]) *(y1[i] - y1[j])));
+        }  
+    }
+    if (x1.size() > 0) s1 /= (x1.size() * x1.size());
+
+ //   fprintf(stderr, "\n----\n ");
+    for (int i = 0; i <(int) x2.size(); i ++)
+    {
+        for (int j = 0; j < (int) x2.size(); j ++ )
+        {
+             s2 += sqrt((x2[i] - x2[j]) *(x2[i] - x2[j]) + (y2[i] - y2[j]) *(y2[i] - y2[j]));
+  //           fprintf(stderr, "%.3f ",  sqrt((x2[i] - x2[j]) *(x2[i] - x2[j]) + (y2[i] - y2[j]) *(y2[i] - y2[j])));
+        }  
+    }
+    if (x2.size() > 0) s2 /= (x2.size() * x2.size());
+    fprintf(stderr, "ref sample %d %d\n", (int) x1.size(), x2.size());
+    dist1 = s1; dist2 = s2;
+}
+
+double CSWMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay)
+{
+    double fscore = 1;
+    InitMatch(pSS1, pSS2, pASet, model, bTwoWay);
+    
+    CShapeContext::Clean(*m_pOSS1);
+    CShapeContext::Clean(*m_pOSS2);
+    while (m_pSS1->GetSeqNum() > 0 && m_pSS2->GetSeqNum() > 0 && fscore > 0)
+    {
+        fscore = MatchAStep();
+        vector<int> ref1;
+        vector<int> ref2;
+        GetRef(ref1, ref2);
+        float dist1, dist2;
+        GetMeanDist(dist1, dist2);
+    
+        CShapeContext::ExtractFeature(*m_pOSS1, ref1, (dist1 + dist2)/2.0);       
+        CShapeContext::ExtractFeature(*m_pOSS2, ref2, (dist1 + dist2)/2.0);       
+        ReleaseMatchingTable();
+        UpdateMatching();
+        fprintf(stderr, "total score so far %f \n", m_fTotalScore);    
+    }
+    CleanUpMatch();
+    return m_fTotalScore;    
+}
 double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay)
 {
     double fscore = 1;
@@ -343,16 +433,17 @@ double CSWMatch::InitMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, 
     m_fTotalScore = 0;
     return 0;
 }
-double CSWMatch::CleanUpMatch()
+void CSWMatch::CleanUpMatch()
 {
     ReleaseMatchingTable();
     delete m_pSS1;
     delete m_pSS2;
-    return 0;
+    return ;
 }
 double CSWMatch::MatchAStep()
 {
     double fMaxScore = -1;
+    double fMaxProb = -1;
     int bestP1 = 0, bestP2 = 0;
     CAlignment* pBestAlign = NULL;
     std::map<pair<int, int>, CAlignment*>::iterator itr; 
@@ -360,10 +451,13 @@ double CSWMatch::MatchAStep()
     for(itr = m_mapCachedMatching.begin(); itr != m_mapCachedMatching.end(); ++itr)
     {
          CAlignment* pAlign =(CAlignment*) (*itr).second;
-         if (pAlign->m_fScore > fMaxScore) 
+         float fprob = pAlign->m_fScore / log(1 + pAlign->m_nLength1) / log(1 + pAlign->m_nLength2);
+//         float fprob = pAlign->m_fScore / pAlign->m_nLength1 /  pAlign->m_nLength2;
+         if (fprob > fMaxProb)
          {
              maxitr = itr;
              fMaxScore = pAlign->m_fScore;
+             fMaxProb = fprob;
              bestP1 = (*itr).first.first; 
              bestP2 = (*itr).first.second;
  //           fprintf(stderr, "<< %d %d %.4f\n", bestP1, bestP2, fMaxScore);
@@ -372,26 +466,25 @@ double CSWMatch::MatchAStep()
     }
     fprintf(stderr, "result: from (%d seq %d seq) %d %d score: %f total score%f)\n", m_pSS1->GetSeqNum(),m_pSS2->GetSeqNum(), bestP1, bestP2,fMaxScore, m_fTotalScore);
     for (int kk = 0; kk < m_pSS1->GetSeqNum(); kk ++)
-        if (m_pSS1->m_vSeqs[kk]->m_iID == bestP1) 
-            fprintf(stderr, "(seq %d, id %d : %d ) ", kk, m_pSS1->m_vSeqs[kk]->m_iID, m_pSS1->m_vSeqs[kk]->GetPointNum());
+        if (m_pSS1->GetSeq(kk)->m_iID == bestP1) 
+            fprintf(stderr, "(seq %d, id %d : %d ) ", kk, m_pSS1->GetSeq(kk)->m_iID, m_pSS1->GetSeq(kk)->GetPointNum());
     
     fprintf(stderr, " and ");
     for (int kk = 0; kk < m_pSS2->GetSeqNum(); kk ++)
-       if (m_pSS2->m_vSeqs[kk]->m_iID == bestP2) 
-        fprintf(stderr, "(seq %d, id %d : %d )\n", kk, m_pSS2->m_vSeqs[kk]->m_iID, m_pSS2->m_vSeqs[kk]->GetPointNum());
+       if (m_pSS2->GetSeq(kk)->m_iID == bestP2) 
+        fprintf(stderr, "(seq %d, id %d : %d )\n", kk, m_pSS2->GetSeq(kk)->m_iID, m_pSS2->GetSeq(kk)->GetPointNum());
     if (fMaxScore < 0.00001)
        return fMaxScore; 
     m_fTotalScore += fMaxScore;
     m_pAlign->AddAlignment(*pBestAlign);
-    
    
     int start1, end1, start2, end2; 
     pBestAlign->GetBound(start1, end1, start2, end2);
     m_pSS1->SplitSeqByID(bestP1, start1, end1); 
     m_pSS2->SplitSeqByID(bestP2, start2, end2); 
     RemoveTable(bestP1, bestP2);
-    m_pSS1->RemoveShortSeqs(3);
-    m_pSS2->RemoveShortSeqs(3);
+//    m_pSS1->RemoveShortSeqs(3);
+//    m_pSS2->RemoveShortSeqs(3);
     fprintf(stderr, "(%f %d %d  %d %d )\n", fMaxScore, start1, end1, start2, end2); 
     return fMaxScore;
 }

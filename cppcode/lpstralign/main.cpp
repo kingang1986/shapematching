@@ -7,6 +7,7 @@
 #include <glpk.h>
 #include "cmdline.h"
 #include "app.h"
+#include "shapecontext.h"
 
 int Train();
 int Match();
@@ -74,15 +75,15 @@ CParser parser = CParser("lpstralign",5, &itm_train, &itm_test, &itm_match, &itm
 int Convert()
 {
 	CSetOfSeq ss;
-	ss.LoadSS(arg_input);
-	ss.SaveSSBinary(arg_outputfile);
+	ss.Load(arg_input);
+//	ss.SaveBinary(arg_outputfile);
 	return 1;
 }
 int Convert2()
 {
 	CSetOfSeq ss;
-	ss.LoadSSBinary(arg_input);
-	ss.SaveSSBinary(arg_outputfile);
+	//ss.LoadSSBinary(arg_input);
+	//ss.SaveSSBinary(arg_outputfile);
 	return 1;
 }
 int Train()

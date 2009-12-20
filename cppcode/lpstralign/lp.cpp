@@ -62,14 +62,14 @@ CSetOfSeq* CSample::LoadSoS(const char* strSoSFile)
     CSetOfSeq* pSS = new CSetOfSeq();
     char tmp[500];
     sprintf(tmp, "%s%s", m_szFolder, strSoSFile);
-    if (m_bBinaryData)
-    {
-        pSS->LoadSSBinary(tmp);
-    }
-    else
-    {
-        pSS->LoadSS(tmp);
-    }
+//    if (m_bBinaryData)
+//    {
+//        pSS->LoadSSBinary(tmp);
+//    }
+//    else
+//    {
+        pSS->Load(tmp);
+//    }
 
 
     return pSS;

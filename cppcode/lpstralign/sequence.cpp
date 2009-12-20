@@ -87,7 +87,6 @@ int CMSSPoint::m_iFeatureDim = 0;
 vector<string> CMSSPoint::m_vFeatureName;
 CMSSPoint::CMSSPoint()
 {
-   m_pFeature = NULL;
    m_pRFeature = m_pLFeature = NULL;
    m_fX = m_fY = -1;
    m_iOriginalSeqIdx = m_iOriginalPtIdx = -1;
@@ -104,12 +103,32 @@ CMSSPoint::~CMSSPoint()
         delete [] m_pLFeature;
     }
     m_pLFeature = NULL;
-    m_pFeature = NULL;
 }
 
 const char* CMSSPoint::GetFeatureName(int iIdx)
 {
     return m_vFeatureName[iIdx].c_str();
+}
+int CMSSPoint::Allocate()
+{
+   
+    if (m_iFeatureDim <= 0)
+    {
+        fprintf(stderr, "Feature dimemsion inconsistant %d . ", m_iFeatureDim);
+        exit(0);
+    }
+    if (m_pLFeature != NULL)
+    {
+        delete [] m_pLFeature;
+    }
+    m_pLFeature  = new DATATYPE[m_iFeatureDim];
+    if (m_pRFeature != NULL)
+    {
+        delete [] m_pRFeature;
+    }
+    m_pRFeature  = new DATATYPE[m_iFeatureDim];
+//    m_pFeature = m_pLFeature; //initially, left way features as the default feature 
+    return m_iFeatureDim;
 }
 
 int CMSSPoint::GetFeatureIdx(const char* str)
@@ -131,18 +150,6 @@ int CMSSPoint::AddFeature(const char* newf)
     return (int) m_vFeatureName.size();
 }
 
-void CMSSPoint::Reverse()
-{
-    if (m_pFeature == m_pLFeature)
-    {
-        m_pFeature = m_pRFeature;
-    }
-    if (m_pFeature == m_pRFeature)
-    {
-        m_pFeature = m_pLFeature;
-    }
-    return ;
-}
 
 /////////////////////////////////////////////////////////////
 //class CSequence
@@ -150,6 +157,7 @@ void CMSSPoint::Reverse()
 CSequence::CSequence()
 {
    m_bOwner = true;
+   m_bForward = true;
 }
 
 CSequence::CSequence(const CSequence& seq) // shallow copy
@@ -161,6 +169,7 @@ CSequence::CSequence(const CSequence& seq) // shallow copy
     }
     m_iID = seq.m_iID;
     m_bOwner = false;
+    m_bForward = seq.m_bForward;
    
 
 }
@@ -179,6 +188,7 @@ void CSequence::Release()
             delete pt;
         }
     }
+    m_vFeature.clear();
     m_vPoints.clear();
     return ;
 }
@@ -186,20 +196,22 @@ void CSequence::Release()
 void CSequence::Reverse() // inplace reverse 
 {
     int n = GetPointNum(); 
+    m_bForward = !m_bForward;
     for (int i = 0; i <= n/2; i ++)
     {
         CMSSPoint* pt = m_vPoints[i];
         m_vPoints[i] = m_vPoints[n -1 - i];
         m_vPoints[n - 1 - i] = pt;
-        pt->Reverse();
     }
     m_vFeature.clear();
     for (int i = 0; i < n; i ++)
     {
-        m_vFeature.push_back(m_vPoints[i]->m_pFeature);
+        if (m_bForward)
+            m_vFeature.push_back(m_vPoints[i]->m_pLFeature);
+        else
+            m_vFeature.push_back(m_vPoints[i]->m_pRFeature);
     }
 }
-
 
 DATATYPE* CSequence::GetPointValue(int iIndex)
 {
@@ -209,8 +221,12 @@ DATATYPE* CSequence::GetPointValue(int iIndex)
 
 int CSequence::AddPoint(CMSSPoint* pt)
 {
+    
     m_vPoints.push_back(pt);
-    m_vFeature.push_back(pt->m_pFeature);
+    if (m_bForward)
+        m_vFeature.push_back(pt->m_pLFeature);
+    else
+        m_vFeature.push_back(pt->m_pRFeature);
     return (int) m_vPoints.size();
 }
 
@@ -221,7 +237,7 @@ int CSequence::AddPoint(CMSSPoint* pt)
 CSetOfSeq::CSetOfSeq()
 {
     m_iTotalPoint = 0;
-    m_iSeqIds = 10001;
+    m_iSeqCount = 0;
     m_iClassID = -1;
     m_iShapeID = -1;
 }
@@ -229,12 +245,12 @@ CSetOfSeq::CSetOfSeq()
 CSetOfSeq::CSetOfSeq(const char* strDataFile)
 {
     CSetOfSeq();
-    LoadSS(strDataFile);
+    Load(strDataFile);
 
 } 
 CSetOfSeq::CSetOfSeq(const CSetOfSeq& ss)
 {
-    m_iSeqIds = ss.m_iSeqIds;
+    m_iSeqCount = ss.m_iSeqCount;
     m_iTotalPoint = ss.m_iTotalPoint;
     for (int i = 0; i < (int) ss.m_vSeqs.size(); i ++)
     {
@@ -264,34 +280,6 @@ CSetOfSeq::~CSetOfSeq()
     Release();
 }
 
-int CSetOfSeq::GetX(int iSeq, int iPt)
-{
-    double x =-1;
-    if (iSeq < (int) m_vSeqs.size())
-    {
-        CSequence* pSeq = m_vSeqs[iSeq];
-        if (iPt < pSeq->GetPointNum())
-        {
-            x = pSeq->m_vPoints[iPt]->m_fX;
-            return x;
-        }
-    }
-    return x;
-}
-int CSetOfSeq::GetY(int iSeq, int iPt)
-{
-    double y =-1;
-    if (iSeq < (int) m_vSeqs.size())
-    {
-        CSequence* pSeq = m_vSeqs[iSeq];
-        if (iPt < pSeq->GetPointNum())
-        {
-            y = pSeq->m_vPoints[iPt]->m_fY;
-            return y;
-        }
-    }
-    return y;
-}
 int CSetOfSeq::GetXY(int iSeq, int iPt, float& x, float& y)
 {
     x = y = -1;
@@ -310,8 +298,8 @@ int CSetOfSeq::GetXY(int iSeq, int iPt, float& x, float& y)
 
 int CSetOfSeq::AddSequence(CSequence* pSeq)
 {
-    pSeq->m_iID = m_iSeqIds;
-    m_iSeqIds ++;
+    pSeq->m_iID = m_iSeqCount;
+    m_iSeqCount++;
     m_vSeqs.push_back(pSeq);
     UpdateTotalPoints();
     return (int) m_vSeqs.size();
@@ -396,9 +384,9 @@ int CSetOfSeq::SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2)
     return -1;
 }
 
+ /*
 int CSetOfSeq::LoadSSBinary(const char* strFile)
 {
- /*
     Release();
 
     FILE* f = fopen(strFile, "r");
@@ -432,13 +420,13 @@ int CSetOfSeq::LoadSSBinary(const char* strFile)
     }
     fclose(f);
     Update();
-*/
     return 1;
 
 }
+*/
+/*
 int CSetOfSeq::SaveSSBinary(const char* strFile)
 {
-/*
     FILE* f=fopen(strFile, "w");
     //write file header
     fwrite(&m_iFeatureDim, sizeof(int), 1, f);
@@ -459,12 +447,12 @@ int CSetOfSeq::SaveSSBinary(const char* strFile)
         }
     }
     fclose(f);
-*/
     return 1;
 }
 
+*/
 
-int CSetOfSeq::LoadSS(const char* strFile)
+int CSetOfSeq::Load(const char* strFile)
 {
     FILE* f;
     char line[32768];
@@ -499,7 +487,7 @@ int CSetOfSeq::LoadSS(const char* strFile)
         for (int k = 0; k < CMSSPoint::m_iFeatureDim; k ++)
         {
             pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
-            fprintf(stderr, "feature: %d/%d: %s.\n",k, CMSSPoint::m_iFeatureDim, tmpbuffer + 1);
+//            fprintf(stderr, "feature: %d/%d: %s.\n",k, CMSSPoint::m_iFeatureDim, tmpbuffer + 1);
             CMSSPoint::AddFeature(tmpbuffer + 1);
         }
     }
@@ -537,15 +525,13 @@ int CSetOfSeq::LoadSS(const char* strFile)
                 for (int k = 0; k < CMSSPoint::m_iFeatureDim; k ++)
                 {
                     pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
-                    newpt->m_pFeature[k] = (DATATYPE) atof(tmpbuffer); 
+                    newpt->m_pLFeature[k] = (DATATYPE) atof(tmpbuffer); 
                 }
-                newpt->Reverse();
                 for (int k = 0; k < CMSSPoint::m_iFeatureDim; k ++)
                 {
                     pbuffer = getnextstring(pbuffer, tmpbuffer, '\t');
-                    newpt->m_pFeature[k] = (DATATYPE) atof(tmpbuffer); 
+                    newpt->m_pRFeature[k] = (DATATYPE) atof(tmpbuffer); 
                 }
-                newpt->Reverse();
                 pSeq->AddPoint(newpt);
             }
         }
@@ -639,4 +625,36 @@ void CSetOfSeq::SetFeatureValue(int seq, int pt, int idx, DATATYPE value, int bi
     else 
         m_vSeqs[seq]->m_vPoints[pt]->m_pRFeature[idx] = value;
     
+}
+CMSSPoint* CSetOfSeq::GetPoint(int idx)
+{
+    int seq = 0; int pt = 0;
+    GetPointPosition(idx, seq, pt);
+    return GetSeqPoint(seq, pt);
+}
+CMSSPoint* CSetOfSeq::GetSeqPoint(int seq,int iPt)
+{
+    return m_vSeqs[seq]->m_vPoints[iPt];
+}
+void CSetOfSeq::GetPointPosition(int idx, int& seq, int& pt)
+{
+    seq = 0;
+    pt= 0;
+    while (idx >= GetSeqLength(seq))
+    {
+        idx -= GetSeqLength(seq); 
+        seq += 1;
+    }
+    pt = idx;
+}
+
+int CSetOfSeq::GetPointIdx(int seq, int pt)
+{
+    int idx = 0;
+    if (seq >= GetSeqNum()) fprintf(stderr, "seq %d out of bound %d\n", seq, GetSeqNum());
+    for (int i = 0; i < seq ; i ++) 
+    {
+       idx += m_vSeqs[seq]->GetPointNum(); 
+    }
+    return idx + pt ;
 }

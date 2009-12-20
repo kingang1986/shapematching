@@ -215,12 +215,14 @@ void CModel::Default(int iFeatureNum)
     {
         m_vWeight[i] = -1.0;
         m_vMapType[i] = MAPTYPE_UNCHANGE;
+        //m_vMapType[i] = MAPTYPE_ABS;
+        //m_vMapType[i] = MAPTYPE_EU;
         m_vFeatureIndex[i] = i; 
         m_vWeightIndex[i] = i; 
         m_vSign[i] = -1; 
         m_vMatchOrGap[i] = MAPTYPE_MATCH; 
     }
-    m_vWeight[iFeatureNum] = 0.5 * iFeatureNum;
+    m_vWeight[iFeatureNum] = 0.2 * iFeatureNum;
     m_vMapType[iFeatureNum] = MAPTYPE_CONSTANT;
     m_vFeatureIndex[iFeatureNum] = -1;
     m_vWeightIndex[iFeatureNum] = iFeatureNum;
