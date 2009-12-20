@@ -22,7 +22,7 @@ int CAlignment::GetOperNum() { return (int) m_operation.size();}
 int CAlignment::GetOper(int iIndex, int& oper, int& seq1, int& seq2, int& pt1, int&pt2, int& layer)
 {
     oper = seq1 = seq2 = pt1 = pt2 = -1;
-    if (iIndex < 0 || iIndex > (int)m_operation.size()) 
+    if (iIndex < 0 || iIndex >= (int)m_operation.size()) 
           return -1;
     oper = m_operation[iIndex];
     seq1 = m_SeqIndex1[iIndex];
@@ -31,7 +31,6 @@ int CAlignment::GetOper(int iIndex, int& oper, int& seq1, int& seq2, int& pt1, i
     pt2 = m_PointIndex2[iIndex];
     layer = m_layer[iIndex];
     return iIndex;
-
 
 }
 double CAlignment::AddAlignment(CAlignment& align)
@@ -43,7 +42,8 @@ double CAlignment::AddAlignment(CAlignment& align)
     }
     m_pSS1 = align.m_pSS1;
     m_pSS2 = align.m_pSS2;
-//    fprintf(stderr, "add alignment %d and %d \n", m_operation.size(), align.m_operation.size());
+//   fprintf(stderr, "add alignment %d and %d \n", m_operation.size(), align.m_operation.size());
+//    fprintf(stderr, "0: %d %d %d \n", align.m_operation[0], align.m_SeqIndex1[0], align.m_SeqIndex2[0]);
     for (int i = 0; i < (int) align.m_operation.size(); i ++)
     {
         m_operation.push_back(align.m_operation[i]);
@@ -70,8 +70,8 @@ double CAlignment::GetPhi(double* phi, int iParamDim, CModel* model)
       DATATYPE* b;
 
       try{
-         a = m_pSS1->m_vSeqs[m_SeqIndex1[i]]->GetPointValue(m_PointIndex1[i]);
-         b = m_pSS2->m_vSeqs[m_SeqIndex2[i]]->GetPointValue(m_PointIndex2[i]);
+         a = m_pSS1->GetSeq(m_SeqIndex1[i])->GetPointValue(m_PointIndex1[i]);
+         b = m_pSS2->GetSeq(m_SeqIndex2[i])->GetPointValue(m_PointIndex2[i]);
       }catch(...)
       {
           fprintf(stderr, "%d %d",i,  m_SeqIndex2[i]);

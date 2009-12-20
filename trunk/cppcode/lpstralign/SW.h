@@ -33,9 +33,10 @@ public:
     }   
     ~CSWMatch(){};
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
+    double DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
 
     double InitMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay = false);
-    double CleanUpMatch();
+    void CleanUpMatch();
     double MatchAStep();
     double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
     double MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model, bool bTwoway = false);
@@ -54,6 +55,9 @@ public:
     CModel* m_model;
     bool m_bTwoWay;
     CAlignment* m_pAlign;
+protected:
+    void  GetRef(vector<int>& ref1, vector<int>& ref2);
+    void  GetMeanDist(float& dist1, float& dist2);
     
  
 };

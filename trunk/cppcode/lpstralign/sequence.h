@@ -27,40 +27,15 @@ public:
 public:
     CMSSPoint();
     virtual ~CMSSPoint();
-    void Reverse();
-    DATATYPE* m_pFeature;
-
+    int Allocate();
    
     DATATYPE  m_fX;
     DATATYPE  m_fY;
-    int Allocate()
-    {
-       
-        if (m_iFeatureDim <= 0)
-        {
-            fprintf(stderr, "Feature dimemsion inconsistant %d . ", m_iFeatureDim);
-            exit(0);
-        }
-        if (m_pLFeature != NULL)
-        {
-            delete [] m_pLFeature;
-        }
-        m_pLFeature  = new DATATYPE[m_iFeatureDim];
-        if (m_pRFeature != NULL)
-        {
-            delete [] m_pRFeature;
-        }
-        m_pRFeature  = new DATATYPE[m_iFeatureDim];
-        m_pFeature = m_pLFeature; //initially, left way features as the default feature 
-        return m_iFeatureDim;
-    }
-
     int     m_iOriginalSeqIdx;
     int     m_iOriginalPtIdx;
 
     DATATYPE* m_pRFeature; //one way feature , feature startswith 'f'
     DATATYPE* m_pLFeature; //reverse way feature, feature name startswith 'g'
-
 };
 
 class CSequence
@@ -77,10 +52,11 @@ public:
     DATATYPE* GetPointValue(int iIndex);
     vector<DATATYPE*> m_vFeature; // just reference, memory managed by CMSSPoint
 
-    vector<CMSSPoint*> m_vPoints; // own the points;
+    vector<CMSSPoint*> m_vPoints; // reference to points 
+    bool m_bForward;
 
     int m_iID;
-    bool m_bOwner;
+    bool m_bOwner; //only owner need to release points
 
 };
 
@@ -92,13 +68,13 @@ public:
     CSetOfSeq(const char* strDataFile);
     ~CSetOfSeq();
     int AddSequence(CSequence* pSeq);
-    int LoadSS(const char* strFile);
-    int LoadSSBinary(const char* strFile);
-    int SaveSSBinary(const char* strFile);
+    int Load(const char* strFile);
+//    int Write(const char* strFile);
+//    int LoadSSBinary(const char* strFile);
+//    int SaveSSBinary(const char* strFile);
 
     int CheckSeq(const char* strFile, vector<int>& vSeqLength);
     void Print();
-    void UpdateTotalPoints();
     void Release();
     int SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2);
     int SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2);
@@ -108,19 +84,25 @@ public:
 #else
     int GetXY(int iSeq, int iPt, float& x, float& y);
 #endif
-    int GetX(int iSeq, int iPt);
-    int GetY(int iSeq, int iPt);
     int GetSeqNum() { return (int) m_vSeqs.size(); }
-    int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum();}
+    int GetSeqLength(int iSeq) { if (iSeq < (int) m_vSeqs.size() ) return m_vSeqs[iSeq]->GetPointNum(); return -1;}
     CSequence* GetSeq(int iSeq) { return m_vSeqs[iSeq];}
     void SetFeatureValue(int seq, int pt, int idx, DATATYPE value, int bidirecti = 0); //bidrect : 0->both, 1->left, 2 -. right
+    CMSSPoint* GetPoint(int iIdx);
+    CMSSPoint* GetSeqPoint(int iSeq, int pt); 
+    int GetPointIdx(int iSeq, int iPt); 
+    void GetPointPosition(int idx, int& iSeq, int& pt); 
 
 public:    
     int m_iTotalPoint;
-    vector<CSequence*> m_vSeqs;
     string m_strFileName;
     int m_iShapeID;
     int m_iClassID;
-    int m_iSeqIds;
+    int m_iSeqCount;
+
+protected:
+    void UpdateTotalPoints();
+    vector<CSequence*> m_vSeqs;
+    
 };
 #endif
