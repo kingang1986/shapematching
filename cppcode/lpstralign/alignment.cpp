@@ -211,3 +211,13 @@ void CAlignment::Clean()
     m_nLength1 = m_nLength2 = 0;
      
 }
+
+void CAlignment::Print()
+{
+    fprintf(stderr, " %d opers, %.4f scores\n", GetOperNum(), m_fScore);
+    for (int i = 0; i < (int)m_SeqIndex1.size(); i ++)
+    {
+        //fprintf(stderr, "op %d: %d %d %d %d %d %d\n", i, m_SeqIndex1[i], m_SeqIndex2[i], m_PointIndex1[i], m_PointIndex2[i], m_operation[i], m_layer[i]);
+        fprintf(stderr, "op %d: %d %d %d %d %d\n", i, m_SeqIndex1[i], m_SeqIndex2[i], m_PointIndex1[i], m_PointIndex2[i], m_operation[i]);
+    }
+}

@@ -24,10 +24,11 @@ public:
     CAlignment();
     ~CAlignment();
     double  AddAlignment(CAlignment& align);
-    void Clean(); //clear all info
+    void    Clean(); //clear all info
     double  GetPhi(double* phi, int iParamDim, CModel* model);
     void    GetBound(int& start1, int& end1, int& start2, int& end2);
-    int GetOperNum();
+    int     GetOperNum();
+    void    Print();
 #ifndef SWIG
     int GetOper(int iIndex, int& oper, int& seq1, int& seq2, int&pt1, int& pt2, int& layer);
 #else

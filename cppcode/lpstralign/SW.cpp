@@ -7,9 +7,10 @@
 
 using namespace std;
 
-double CSWMatch::getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model)
+double CSWMatch::getSubstituteCost(DATATYPE* a, DATATYPE* b)
 {
     double cost = 0;
+    CModel* model = m_model;
     for (int i = 0; i < model->m_iMatchCount; i++)
     {
         int t = model->m_vMatch[i];
@@ -27,7 +28,8 @@ double CSWMatch::getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model)
             {
                 DATATYPE d = fa - fb;
                 cost += model->m_vWeight[wid] * d * d / (fabs(fa) + fabs(fb));
-                //fprintf(stderr, "/%f, %f/ ", model->m_vWeight[t],  d * d / (fabs(a[i]) + fabs(b[i])));
+                if (wid == 9)
+                    fprintf(stderr, "(%f, %f) ", model->m_vWeight[wid], d*d/ (fabs(fa) + fabs(fb)));
             }
         }
         else if (model->m_vMapType[t] == MAPTYPE_ABS)
@@ -61,10 +63,11 @@ double CSWMatch::getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model)
     return cost;
 }
 
-double CSWMatch::getGapCost(DATATYPE* a, CModel* model)
+double CSWMatch::getGapCost(DATATYPE* a)
 {
     //fprintf(stderr, "cal gap cost\n");
     double cost = 0;
+    CModel* model = m_model;
     for (int i = 0; i < model->m_iGapCount; i++)
     {
 
@@ -90,8 +93,9 @@ double CSWMatch::getGapCost(DATATYPE* a, CModel* model)
     // return f; //debug
 }
 
-double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model, bool bTwoWay)
+double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign)
 {
+    bool bTwoWay = m_bTwoWay;
     if (bTwoWay)   
     {
         CAlignment* pAl = new CAlignment(); 
@@ -99,8 +103,8 @@ double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* p
         pAl-> m_pSS2 = pAlign->m_pSS2;
         CSequence* pRevB = new CSequence(*pSeqB);
         pRevB->Reverse();
-        double f = MatchSequenceOneWay(pSeqA, pRevB, pAl, model);
-        double f1 =  MatchSequenceOneWay(pSeqA, pSeqB, pAlign, model);
+        double f = MatchSequenceOneWay(pSeqA, pRevB, pAl);
+        double f1 =  MatchSequenceOneWay(pSeqA, pSeqB, pAlign);
 //        if (f>0 || f1>0)
 //        fprintf(stderr, "(rev: %f <> ori%f)\n", f, f1);
         if (f > f1)
@@ -115,24 +119,25 @@ double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* p
     }
     else 
     {
-        return MatchSequenceOneWay(pSeqA, pSeqB, pAlign, model);
+        return MatchSequenceOneWay(pSeqA, pSeqB, pAlign);
     }
     return 0.0;
 }
-//oneway
-double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model)
-{
 
-    CSWNode ** S;
+//oneway
+double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign)
+{
     int iLengthA = pSeqA->GetPointNum();
     int iLengthB = pSeqB->GetPointNum();
     pAlign->m_nLength1 = iLengthA;
     pAlign->m_nLength2 = iLengthB;
-    S = new CSWNode*[iLengthA + 1];
+    CSWNode** S = new CSWNode*[iLengthA + 1];
+    if (!S) fprintf(stderr, "cant allocate memory matrix\n");
     //fprintf(stderr, "length %d %d\n", iLengthA, iLengthB);
     for (int i = 0; i < iLengthA + 1; i++)
     {
         S[i] = new CSWNode[iLengthB + 1];
+        if (!S[i]) fprintf(stderr, "cant allocate memeory at %d \n", i );
     }
     for (int i = 0; i < iLengthA + 1; i++)
     {
@@ -140,6 +145,7 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
         S[i][0].prev = NULL;
         S[i][0].row_index = i;
         S[i][0].column_index = 0;
+        S[i][0].operation = -1;
     }
 
     for (int i = 0; i < iLengthB + 1; i++)
@@ -148,40 +154,36 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
         S[0][i].prev = NULL;
         S[0][i].row_index = 0;
         S[0][i].column_index = i;
+        S[0][i].operation = -1;
     }
-    //fprintf(stderr, "ttok1\n");
     int maxA = 0, maxB = 0;
     CSWNode* endSequence = &S[0][0];
     vector<DATATYPE*>& A = pSeqA->m_vFeature;
     vector<DATATYPE*>& B = pSeqB->m_vFeature;
-    //fprintf(stderr, "ttok2\n");
-//    fprintf(stderr, "match (%d, %d, %d  %d)\n", iLengthA, iLengthB, A.size(), B.size());
     for (int i = 1; i < iLengthA + 1; i++)
     {
          
- //       fprintf(stderr, "%d, \n", i);
         for (int j = 1; j < iLengthB + 1; j++)
         {
             S[i][j].row_index = i;
             S[i][j].column_index = j;
             S[i][j].score = 0;
             S[i][j].prev = NULL;
-            double subst_ij1 = getSubstituteCost(A[i - 1], B[j - 1], model) + S[i - 1][j - 1].score;
-  //          if (subst_ij1 > 0) fprintf(stderr, "sub cost %f\n", subst_ij1);
+            double subst_ij1 = getSubstituteCost(A[i - 1], B[j - 1]) + S[i - 1][j - 1].score;
             if (subst_ij1 > S[i][j].score)
             {
                 S[i][j].score = subst_ij1;
                 S[i][j].prev = &S[i - 1][j - 1];
                 S[i][j].operation = SUBST;
             }
-            double subst_ij2 = getGapCost(A[i - 1], model) + S[i - 1][j].score;
+            double subst_ij2 = getGapCost(A[i - 1]) + S[i - 1][j].score;
             if (subst_ij2 > S[i][j].score)
             {
                 S[i][j].score = subst_ij2;
                 S[i][j].prev = &S[i - 1][j];
                 S[i][j].operation = DELET;
             }
-            double subst_ij3 = getGapCost(B[j - 1], model) + S[i][j - 1].score;
+            double subst_ij3 = getGapCost(B[j - 1]) + S[i][j - 1].score;
             //fprintf(stderr, "gap cost %f, %f\n", subst_ij2, subst_ij3);
             if (subst_ij3 > S[i][j].score)
             {
@@ -197,27 +199,26 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
                 maxA = i;
                 maxB = j;
             }
-            //fprintf(stderr, "(%d, %d): %4.2f ", i, j, S[i][j].score);
         }
     }
-    //fprintf(stderr, "ttok3\n");
     ///////////////////////////////////////////
     // Retrieve alignment
     ///////////////////////////////////////////
-    /*get length of alignment*/
+    //get length of alignment
     CSWNode* temp_node = endSequence;
     pAlign->m_fScore = temp_node->score;
     int oper_count = 0;
-    pAlign->m_iStart1 = temp_node->row_index - 1; 
-    pAlign->m_iStart2 = temp_node->column_index - 1; 
+    pAlign->m_iStart1 = temp_node->row_index ; 
+    pAlign->m_iStart2 = temp_node->column_index; 
     while (temp_node->prev)
     {
+ //       fprintf(stderr, "%d (%d, %d): %4.2f %d\n", oper_count, temp_node->row_index, temp_node->column_index, temp_node->score, temp_node->operation);
         if (temp_node->operation<0 || temp_node->operation > 10) fprintf(stderr, "[ERROR] wrong oper %d\n", temp_node->operation);
         pAlign->m_operation.push_back(temp_node->operation);
-        if (temp_node->operation == SUBST || temp_node->operation == DELET) 
+        if (temp_node->operation == SUBST || temp_node->operation == DELET)
         {
-            pAlign->m_SeqIndex1.push_back(pSeqA->m_vPoints[temp_node->prev->row_index]->m_iOriginalSeqIdx);
-            pAlign->m_PointIndex1.push_back(pSeqA->m_vPoints[temp_node->prev->row_index]->m_iOriginalPtIdx); 
+            pAlign->m_SeqIndex1.push_back(pSeqA->m_vPoints[temp_node->row_index-1]->m_iOriginalSeqIdx);
+            pAlign->m_PointIndex1.push_back(pSeqA->m_vPoints[temp_node->row_index-1]->m_iOriginalPtIdx); 
         }
         else
         {
@@ -227,8 +228,8 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
         
         if (temp_node->operation == SUBST || temp_node->operation == INSRT) 
         {
-            pAlign->m_SeqIndex2.push_back(pSeqB->m_vPoints[temp_node->prev->column_index]->m_iOriginalSeqIdx);
-            pAlign->m_PointIndex2.push_back(pSeqB->m_vPoints[temp_node->prev->column_index]->m_iOriginalPtIdx); 
+            pAlign->m_SeqIndex2.push_back(pSeqB->m_vPoints[temp_node->column_index-1]->m_iOriginalSeqIdx);
+            pAlign->m_PointIndex2.push_back(pSeqB->m_vPoints[temp_node->column_index-1]->m_iOriginalPtIdx); 
         }
         else
         {
@@ -242,14 +243,13 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
         temp_node = temp_node->prev;
   
     }
-    //fprintf(stderr, "ttok4\n");
-
+//    fprintf(stderr, "start_ends %d %d %d %d\n", pAlign->m_iStart1, pAlign->m_iEnd1, pAlign->m_iStart2, pAlign->m_iEnd2);
     /*free DP matrices */
     for (int i = 0; i < iLengthA + 1; i++)
     {
-        free(S[i]);
+        delete[] S[i];
     }
-    free(S);
+    delete[] S;
     return pAlign->m_fScore;
 
 }
@@ -300,7 +300,7 @@ void CSWMatch::UpdateMatching()
             p.second = pS2->m_iID;
             if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
             {
-                MatchSequence(pS1, pS2, pAlign, m_model, m_bTwoWay);
+                MatchSequence(pS1, pS2, pAlign);
                 if (pAlign->m_fScore > 100.0)
                     fprintf(stderr, "(%d (len %d) %d(len %d) -> %.4f)\n", p.first, pS1->GetPointNum(), p.second,pS2->GetPointNum(), pAlign->m_fScore);
                 m_mapCachedMatching[p] = pAlign;
@@ -390,6 +390,38 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     return m_fTotalScore;    
 }
 
+CAlignment* CSWMatch::FindBestMatch(int& bestP1, int& bestP2, double& fMaxScore)
+{
+    fMaxScore = -1;
+    bestP1 = -1; bestP2 = -1;
+    CAlignment* pBestAlign = NULL;
+    
+    for (int i = 0; i < m_pSS1->GetSeqNum(); i ++)
+    {
+        CSequence* pS1 = m_pSS1->GetSeq(i);
+        for (int j = 0; j < m_pSS2->GetSeqNum(); j ++)  
+        {
+            CSequence* pS2 = m_pSS2->GetSeq(j);
+            CAlignment* pAlign = new CAlignment();
+            pAlign->m_pSS1 = m_pOSS1;
+            pAlign->m_pSS2 = m_pOSS2;
+            MatchSequence(pS1, pS2, pAlign);
+            fprintf(stderr, " * search : %d %d %.4f\n", i, j, pAlign->m_fScore); 
+            if (fMaxScore < pAlign->m_fScore)
+            {
+                fMaxScore = pAlign->m_fScore;
+                if (!pBestAlign) delete pBestAlign;
+                pBestAlign = pAlign;
+                bestP1 = pS1->m_iID; bestP2 = pS2->m_iID;
+            }
+            else
+            {
+                delete pAlign;
+            }
+        }
+    }  
+    return pBestAlign; 
+}
 /////////////////////////////////////////////////////////////////////////////////////////
 // class CDynamicMatch
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -423,7 +455,6 @@ double CDynamicMatch::InitCandidate(CAlignment* palign)
 
 double CDynamicMatch::FindAllCandidate()
 {
-    int iCount = 0;
     for (int i = 0; i < m_pSS1->GetSeqNum(); i ++)
     {
         CSequence* pS1 = m_pSS1->GetSeq(i);
@@ -433,7 +464,7 @@ double CDynamicMatch::FindAllCandidate()
             CAlignment* pAlign = new CAlignment();
             pAlign->m_pSS1 = m_pOSS1;
             pAlign->m_pSS2 = m_pOSS2;
-            MatchSequence(pS1, pS2, pAlign, m_model, m_bTwoWay);
+            MatchSequence(pS1, pS2, pAlign);
             if (pAlign->m_fScore > 10.0)
             {
                 m_vCandidate.push_back(pAlign);
@@ -445,37 +476,6 @@ double CDynamicMatch::FindAllCandidate()
     return 0;
 }
 
-CAlignment* CDynamicMatch::FindBestMatch(int& bestP1, int& bestP2, double& fMaxScore)
-{
-    fMaxScore = -1;
-    bestP1 = -1; bestP2 = -1;
-    CAlignment* pBestAlign = NULL;
-    
-    for (int i = 0; i < m_pSS1->GetSeqNum(); i ++)
-    {
-        CSequence* pS1 = m_pSS1->GetSeq(i);
-        for (int j = 0; j < m_pSS2->GetSeqNum(); j ++)  
-        {
-            CSequence* pS2 = m_pSS2->GetSeq(j);
-            CAlignment* pAlign = new CAlignment();
-            pAlign->m_pSS1 = m_pOSS1;
-            pAlign->m_pSS2 = m_pOSS2;
-            MatchSequence(pS1, pS2, pAlign, m_model, m_bTwoWay);
-            if (fMaxScore < pAlign->m_fScore)
-            {
-                fMaxScore = pAlign->m_fScore;
-                if (!pBestAlign) delete pBestAlign;
-                pBestAlign = pAlign;
-                bestP1 = pS1->m_iID; bestP2 = pS2->m_iID;
-            }
-            else
-            {
-                delete pAlign;
-            }
-        }
-    }  
-    return pBestAlign; 
-}
 double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, CModel* dynmodel,  bool bTwoWay)
 {
     double fscore = 1;
@@ -483,7 +483,6 @@ double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pA
     m_model = model;
     m_DynaModel = dynmodel;
     m_bTwoWay = bTwoWay;
-    m_mapCachedMatching.clear();
     m_pOSS1 = pSS1;
     m_pOSS2 = pSS2;
     m_pSS1 = new CSetOfSeq(*pSS1); // not so deep copy
@@ -497,7 +496,7 @@ double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pA
 
     FindAllCandidate();
     m_model = dynmodel;
-    for (int i =0; i < m_vCandidate.size(); i ++)
+    for (int i =0; i < (int)m_vCandidate.size(); i ++)
     {
         fprintf(stderr, "\n=================\nStart with candidate %d\n", i);
         // use alignment i as the initial matching
@@ -514,6 +513,7 @@ double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pA
             int bestP1, bestP2;
             double fScore;
             CAlignment* pAlign = FindBestMatch(bestP1, bestP2, fScore);
+            //pAlign->Print();
             m_pAlign->AddAlignment(*pAlign);
             m_fTotalScore += fScore;
             int start1, end1, start2, end2; 
@@ -540,11 +540,12 @@ void  CDynamicMatch::GetRef(vector<int>& ref1, vector<int>& ref2)
     {
        int oper, seq1, seq2, pt1, pt2, layer; 
        m_pAlign->GetOper(i, oper, seq1, seq2, pt1, pt2, layer);
-//       fprintf(stderr, "oper %d: %d %d %d %d %d %d\n", i, oper,  seq1, seq2, pt1, pt2, layer);
-       if (seq1 >=0 && pt1 >= 0)
+       if (seq1 >=0 && pt1 >= 0 && seq2 >= 0 && pt2 >=0)
+       {
            ref1.push_back(m_pOSS1->GetPointIdx(seq1, pt1));
-       if (seq2 >=0 && pt2 >= 0)
            ref2.push_back(m_pOSS2->GetPointIdx(seq2, pt2));
+ //          fprintf(stderr, "oper %d: %d %d %d,  %d %d %d\n", i,  seq1, pt1, m_pOSS1->GetPointIdx(seq1, pt1),  seq2, pt2, m_pOSS2->GetPointIdx(seq2, pt2)); 
+       }
     }
 }
 void  CDynamicMatch::GetMeanDist(float& dist1, float& dist2)
