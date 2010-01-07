@@ -656,7 +656,7 @@ int CSetOfSeq::GetPointIdx(int seq, int pt)
     if (seq >= GetSeqNum()) fprintf(stderr, "seq %d out of bound %d\n", seq, GetSeqNum());
     for (int i = 0; i < seq ; i ++) 
     {
-       idx += m_vSeqs[seq]->GetPointNum(); 
+       idx += m_vSeqs[i]->GetPointNum(); 
     }
     return idx + pt ;
 }

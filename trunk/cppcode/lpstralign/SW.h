@@ -34,10 +34,10 @@ public:
     }   
     ~CSWMatch(){};
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
-    double MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model, bool bTwoway = false);
-    double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
-    double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model);
-    double getGapCost(DATATYPE* a, CModel* model);
+    double MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign); 
+    double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign);
+    double getSubstituteCost(DATATYPE* a, DATATYPE* b);
+    double getGapCost(DATATYPE* a);
 
     CSetOfSeq* m_pOSS1; //reference to the objects
     CSetOfSeq* m_pOSS2;
@@ -56,6 +56,7 @@ public:
     void UpdateMatching();
 protected:
     void showinfo(int bestP1, int bestP2, double fMaxScore);
+    CAlignment* FindBestMatch(int& bestP1, int& bestP2, double& fMaxScore);
  
 };
 
@@ -76,7 +77,6 @@ protected:
     double Verify();
     void   GetRef(vector<int>& ref1, vector<int>& ref2);
     void   GetMeanDist(float& dist1, float& dist2);
-    CAlignment* FindBestMatch(int& bestP1, int& bestP2, double& fMaxScore);
     
 };
 #endif
