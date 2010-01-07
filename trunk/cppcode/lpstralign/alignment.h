@@ -24,6 +24,7 @@ public:
     CAlignment();
     ~CAlignment();
     double  AddAlignment(CAlignment& align);
+    void Clean(); //clear all info
     double  GetPhi(double* phi, int iParamDim, CModel* model);
     void    GetBound(int& start1, int& end1, int& start2, int& end2);
     int GetOperNum();
