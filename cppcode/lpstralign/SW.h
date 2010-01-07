@@ -22,6 +22,7 @@ public:
     int    column_index;
 };
 
+//direct MSS matching
 
 class CSWMatch
 {
@@ -33,33 +34,49 @@ public:
     }   
     ~CSWMatch(){};
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
-    double DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
-
-    double InitMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* model, bool bTwoWay = false);
-    void CleanUpMatch();
-    double MatchAStep();
-    double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
     double MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model, bool bTwoway = false);
+    double MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignment* pAlign, CModel* model);
     double getSubstituteCost(DATATYPE* a, DATATYPE* b, CModel* model);
     double getGapCost(DATATYPE* a, CModel* model);
-    std::map<pair<int,int>, CAlignment*> m_mapCachedMatching;// cached matching score 
-    void ReleaseMatchingTable();
-    void RemoveTable(int shapei, int shapej);
-    CSetOfSeq* m_pOSS1;
-    CSetOfSeq* m_pOSS2;
-    CSetOfSeq* m_pSS1;
-    CSetOfSeq* m_pSS2;
-    void UpdateMatching();
-    double m_fTotalScore;
 
+    CSetOfSeq* m_pOSS1; //reference to the objects
+    CSetOfSeq* m_pOSS2;
+    CSetOfSeq* m_pSS1; // cloned local objects
+    CSetOfSeq* m_pSS2;
+
+    double m_fTotalScore;
     CModel* m_model;
     bool m_bTwoWay;
     CAlignment* m_pAlign;
+
+    //hash table manage: map pair <int,int> to an alignment
+    std::map<pair<int,int>, CAlignment*> m_mapCachedMatching;// cached matching score 
+    void ReleaseMatchingTable();
+    void RemoveTable(int shapei, int shapej);
+    void UpdateMatching();
 protected:
-    void  GetRef(vector<int>& ref1, vector<int>& ref2);
-    void  GetMeanDist(float& dist1, float& dist2);
-    
+    void showinfo(int bestP1, int bestP2, double fMaxScore);
  
 };
 
+// dynamic matching where the shape context features are updated with matching proceeds
+class CDynamicMatch : public CSWMatch
+{
+public:
+    CDynamicMatch();
+    ~CDynamicMatch();
+
+    double DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, CModel* dynmodel, bool bTwoway = false);
+    CModel* m_DynaModel;
+    vector<CAlignment*> m_vCandidate;
+
+protected:
+    double FindAllCandidate();
+    double InitCandidate(CAlignment*);
+    double Verify();
+    void   GetRef(vector<int>& ref1, vector<int>& ref2);
+    void   GetMeanDist(float& dist1, float& dist2);
+    CAlignment* FindBestMatch(int& bestP1, int& bestP2, double& fMaxScore);
+    
+};
 #endif

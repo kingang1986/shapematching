@@ -380,6 +380,8 @@ int CSetOfSeq::SplitSeqByID(int iSeqID, int iSplitPos1, int iSplitPos2)
         if (m_vSeqs[i]->m_iID == iSeqID)
             return SplitSeq(i, iSplitPos1 , iSplitPos2);
     }
+    for (int i = 0; i < (int) m_vSeqs.size() ; i ++)
+        fprintf(stderr, "%d seq's id is %d\n", i, m_vSeqs[i]->m_iID);
     fprintf(stderr, "Can't find sequence %d!!!\n", iSeqID);
     return -1;
 }

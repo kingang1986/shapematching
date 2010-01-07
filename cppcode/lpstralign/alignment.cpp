@@ -196,3 +196,18 @@ void CAlignment::GetBound(int& start1, int& end1, int& start2, int& end2)
     return; 
 }
 
+void CAlignment::Clean()
+{
+    m_pSS1 = m_pSS2 = NULL;
+    m_SeqIndex1.clear(); 
+    m_SeqIndex2.clear(); 
+    m_PointIndex1.clear();
+    m_PointIndex2.clear();
+    m_operation.clear();
+    m_layer.clear();
+    m_iLayerCount = 0;
+    m_fScore = 0.0;
+    m_iStart1 = m_iEnd1 = m_iStart2 = m_iEnd2 = 0;
+    m_nLength1 = m_nLength2 = 0;
+     
+}
