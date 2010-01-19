@@ -34,8 +34,8 @@ public:
     int     m_iOriginalSeqIdx;
     int     m_iOriginalPtIdx;
 
-    DATATYPE* m_pRFeature; //one way feature , feature startswith 'f'
-    DATATYPE* m_pLFeature; //reverse way feature, feature name startswith 'g'
+    DATATYPE* m_pLFeature; //one way feature , feature startswith 'f'
+    DATATYPE* m_pRFeature; //reverse way feature, feature name startswith 'g'
 };
 
 class CSequence
@@ -69,7 +69,7 @@ public:
     ~CSetOfSeq();
     int AddSequence(CSequence* pSeq);
     int Load(const char* strFile);
-//    int Write(const char* strFile);
+    int Write(const char* strFile);
 //    int LoadSSBinary(const char* strFile);
 //    int SaveSSBinary(const char* strFile);
 
