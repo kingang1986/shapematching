@@ -2,9 +2,14 @@
 
 = Introduction =
 
-= Steps
+== Step 1. Vector Quantification ==
 
-== Step1
+== Step 2. Keyword Selection ==
+
+== Step 3. Keyword neighboring ==
+
+== Step 4. Build Index ==
+
 
 
 
