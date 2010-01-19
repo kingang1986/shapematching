@@ -1,8 +1,26 @@
-#How to index the multi-sequence shapes
 
 = Introduction =
 
+   * How to index the multi-sequence shapes
+
 == Step 1. Vector Quantification ==
+
+the QccPack package is used. Install it and use it. 
+
+
+*VQ*
+
+Usage: gla [-v ] [-i  initialcodebookfile] [-s  codebooksize] [-I iterations] [-t  threshold] trainingfile codebookfile
+
+*Encode*
+
+Usage: vqencode datfile codebookfile channelfile
+
+*Decode*
+
+Usage: vqdecode channelfile codebookfile datfile
+
+
 
 == Step 2. Keyword Selection ==
 
