@@ -28,8 +28,6 @@ double CSWMatch::getSubstituteCost(DATATYPE* a, DATATYPE* b)
             {
                 DATATYPE d = fa - fb;
                 cost += model->m_vWeight[wid] * d * d / (fabs(fa) + fabs(fb));
-                if (wid == 9)
-                    fprintf(stderr, "(%f, %f) ", model->m_vWeight[wid], d*d/ (fabs(fa) + fabs(fb)));
             }
         }
         else if (model->m_vMapType[t] == MAPTYPE_ABS)
@@ -105,15 +103,14 @@ double CSWMatch::MatchSequence(CSequence* pSeqA, CSequence* pSeqB, CAlignment* p
         pRevB->Reverse();
         double f = MatchSequenceOneWay(pSeqA, pRevB, pAl);
         double f1 =  MatchSequenceOneWay(pSeqA, pSeqB, pAlign);
-//        if (f>0 || f1>0)
-//        fprintf(stderr, "(rev: %f <> ori%f)\n", f, f1);
+//        fprintf(stderr, "(forward: %f <> reverse: %f)\n", f1, f);
         if (f > f1)
         {
              *pAlign = *pAl; // use default copy
-//             fprintf(stderr, "add score (rev: %f <> ori %f, result %f)\n", f, f1, pAlign->m_fScore);
-             
+             delete pRevB;
              return f;
         }
+        delete pRevB;
         return f1;
         
     }
@@ -212,7 +209,7 @@ double CSWMatch::MatchSequenceOneWay(CSequence* pSeqA, CSequence* pSeqB, CAlignm
     pAlign->m_iStart2 = temp_node->column_index; 
     while (temp_node->prev)
     {
- //       fprintf(stderr, "%d (%d, %d): %4.2f %d\n", oper_count, temp_node->row_index, temp_node->column_index, temp_node->score, temp_node->operation);
+//        fprintf(stderr, "%d (%d, %d): %4.2f %d\n", oper_count, temp_node->row_index, temp_node->column_index, temp_node->score, temp_node->operation);
         if (temp_node->operation<0 || temp_node->operation > 10) fprintf(stderr, "[ERROR] wrong oper %d\n", temp_node->operation);
         pAlign->m_operation.push_back(temp_node->operation);
         if (temp_node->operation == SUBST || temp_node->operation == DELET)
@@ -343,8 +340,10 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
     double fscore = 1;
 
     UpdateMatching();
-    while (m_pSS1->GetSeqNum() > 0 && m_pSS2->GetSeqNum() > 0 && fscore > 0)
+    int iStepCount = 0;
+    while (m_pSS1->GetSeqNum() > 0 && m_pSS2->GetSeqNum() > 0 && fscore > 0 && iStepCount < m_iMaxStep)
     {
+        iStepCount += 1;
         double fMaxScore = -1;
         double fMaxProb = -1;
         int bestP1 = 0, bestP2 = 0;
@@ -406,7 +405,7 @@ CAlignment* CSWMatch::FindBestMatch(int& bestP1, int& bestP2, double& fMaxScore)
             pAlign->m_pSS1 = m_pOSS1;
             pAlign->m_pSS2 = m_pOSS2;
             MatchSequence(pS1, pS2, pAlign);
-            fprintf(stderr, " * search : %d %d %.4f\n", i, j, pAlign->m_fScore); 
+//            fprintf(stderr, " * search : %d %d %.4f\n", i, j, pAlign->m_fScore); 
             if (fMaxScore < pAlign->m_fScore)
             {
                 fMaxScore = pAlign->m_fScore;
@@ -435,20 +434,17 @@ CDynamicMatch::~CDynamicMatch()
 
 double CDynamicMatch::InitCandidate(CAlignment* palign)
 {
-    m_pAlign->Clean();
     if (m_pSS1 != NULL) delete m_pSS1;
     if (m_pSS2 != NULL) delete m_pSS2;
     m_pSS1 = new CSetOfSeq(*m_pOSS1);
     m_pSS2 = new CSetOfSeq(*m_pOSS2);
     m_fTotalScore = palign->m_fScore;
-    m_pAlign->AddAlignment(*palign);
     int start1, end1, start2, end2; 
     palign->GetBound(start1, end1, start2, end2);
     int bestP1 = palign->m_SeqIndex1[0];
     int bestP2 = palign->m_SeqIndex2[0];
     m_pSS1->SplitSeqByID(bestP1, start1, end1); 
     m_pSS2->SplitSeqByID(bestP2, start2, end2); 
-    m_fTotalScore = palign->m_fScore;
     fprintf(stderr, "(%f %d %d  %d %d )\n", palign->m_fScore, start1, end1, start2, end2); 
     return m_fTotalScore;
 }
@@ -496,11 +492,13 @@ double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pA
 
     FindAllCandidate();
     m_model = dynmodel;
+    double fMaxScore = -1;
     for (int i =0; i < (int)m_vCandidate.size(); i ++)
     {
         fprintf(stderr, "\n=================\nStart with candidate %d\n", i);
         // use alignment i as the initial matching
-        InitCandidate(m_vCandidate[i]);
+        CAlignment* palign = m_vCandidate[i];
+        InitCandidate(palign);
         while (m_pSS1->GetSeqNum() > 0 && m_pSS2->GetSeqNum() > 0 && fscore > 0)
         {
             vector<int> ref1;
@@ -512,30 +510,34 @@ double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pA
             CShapeContext::ExtractFeature(*m_pOSS2, ref2, (dist1 + dist2)/2.0);       
             int bestP1, bestP2;
             double fScore;
-            CAlignment* pAlign = FindBestMatch(bestP1, bestP2, fScore);
+            CAlignment* pa = FindBestMatch(bestP1, bestP2, fScore);
             //pAlign->Print();
-            m_pAlign->AddAlignment(*pAlign);
-            m_fTotalScore += fScore;
+            palign->AddAlignment(*pa);
             int start1, end1, start2, end2; 
-            pAlign->GetBound(start1, end1, start2, end2);
+            pa->GetBound(start1, end1, start2, end2);
             m_pSS1->SplitSeqByID(bestP1, start1, end1); 
             m_pSS2->SplitSeqByID(bestP2, start2, end2); 
             m_pSS1->RemoveShortSeqs(3);
             m_pSS2->RemoveShortSeqs(3);
             showinfo(bestP1, bestP2, fScore);
-            fprintf(stderr, "(%f %d %d  %d %d )\n", fScore, start1, end1, start2, end2); 
-            fprintf(stderr, "total score so far %f \n", m_fTotalScore);    
+            delete pa;
         }
+        fprintf(stderr, "total score %f \n", palign->m_fScore);    
+        if (palign->m_fScore > fMaxScore) 
+        {
+            fMaxScore = palign->m_fScore;
+            *m_pAlign = *palign;
+        } 
     }
     delete m_pSS1;
     delete m_pSS2;
     return m_fTotalScore;    
 }
+
 void  CDynamicMatch::GetRef(vector<int>& ref1, vector<int>& ref2)
 {
     ref1.clear();
     ref2.clear();
-  
     for (int i = 0; i < m_pAlign->GetOperNum(); i ++)
     {
        int oper, seq1, seq2, pt1, pt2, layer; 

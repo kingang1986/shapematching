@@ -31,6 +31,7 @@ public:
     {
          m_pSS1 = m_pSS2 = NULL;
          m_model = NULL;
+        m_iMaxStep = -1;
     }   
     ~CSWMatch(){};
     double Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CModel* pModel, bool bTwoway = false);
@@ -47,6 +48,7 @@ public:
     double m_fTotalScore;
     CModel* m_model;
     bool m_bTwoWay;
+    int  m_iMaxStep;
     CAlignment* m_pAlign;
 
     //hash table manage: map pair <int,int> to an alignment
