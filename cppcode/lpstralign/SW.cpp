@@ -298,20 +298,20 @@ void CSWMatch::UpdateMatching()
             if (m_mapCachedMatching.find(p) == m_mapCachedMatching.end())
             {
                 MatchSequence(pS1, pS2, pAlign);
-                if (pAlign->m_fScore > 100.0)
-                    fprintf(stderr, "(%d (len %d) %d(len %d) -> %.4f)\n", p.first, pS1->GetPointNum(), p.second,pS2->GetPointNum(), pAlign->m_fScore);
+ //               if (pAlign->m_fScore > 100.0)
+  //                  fprintf(stderr, "(%d (len %d) %d(len %d) -> %.4f)\n", p.first, pS1->GetPointNum(), p.second,pS2->GetPointNum(), pAlign->m_fScore);
                 m_mapCachedMatching[p] = pAlign;
                 iCount ++;
             }
         }
     }  
-    fprintf(stderr, "Table updated, %d matching are calcualted \n", iCount);
+//    fprintf(stderr, "Table updated, %d matching are calcualted \n", iCount);
     return; 
 }
 
 void CSWMatch::showinfo(int bestP1, int bestP2, double fMaxScore)
 {
-    fprintf(stderr, "result: from (%d seq %d seq) %d %d score: %f total score%f)\n", m_pSS1->GetSeqNum(),m_pSS2->GetSeqNum(), bestP1, bestP2,fMaxScore, m_fTotalScore);
+   fprintf(stderr, "result: from (%d seq %d seq) %d %d score: %f total score%f)\n", m_pSS1->GetSeqNum(),m_pSS2->GetSeqNum(), bestP1, bestP2,fMaxScore, m_fTotalScore);
     for (int kk = 0; kk < m_pSS1->GetSeqNum(); kk ++)
         if (m_pSS1->GetSeq(kk)->m_iID == bestP1) 
             fprintf(stderr, "(seq %d, id %d : %d ) ", kk, m_pSS1->GetSeq(kk)->m_iID, m_pSS1->GetSeq(kk)->GetPointNum());
@@ -366,7 +366,7 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
                  pBestAlign = pAlign;
              }
         }
-        showinfo(bestP1, bestP2, fMaxScore);
+        //showinfo(bestP1, bestP2, fMaxScore);
         if (fMaxScore < 0.00001)
            return fMaxScore; 
         m_fTotalScore += fMaxScore;
@@ -379,9 +379,9 @@ double CSWMatch::Match(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pASet, CMod
         RemoveTable(bestP1, bestP2);
         m_pSS1->RemoveShortSeqs(3);
         m_pSS2->RemoveShortSeqs(3);
-        fprintf(stderr, "(%f %d %d  %d %d )\n", fMaxScore, start1, end1, start2, end2); 
+ //       fprintf(stderr, "(%f %d %d  %d %d )\n", fMaxScore, start1, end1, start2, end2); 
         UpdateMatching();
-        fprintf(stderr, "total score so far %f \n", m_fTotalScore);    
+//        fprintf(stderr, "total score so far %f \n", m_fTotalScore);    
     }
     ReleaseMatchingTable();
     delete m_pSS1;
@@ -519,7 +519,7 @@ double CDynamicMatch::DynaMatch(CSetOfSeq* pSS1, CSetOfSeq* pSS2, CAlignment* pA
             m_pSS2->SplitSeqByID(bestP2, start2, end2); 
             m_pSS1->RemoveShortSeqs(3);
             m_pSS2->RemoveShortSeqs(3);
-            showinfo(bestP1, bestP2, fScore);
+            //showinfo(bestP1, bestP2, fScore);
             delete pa;
         }
         fprintf(stderr, "total score %f \n", palign->m_fScore);    
