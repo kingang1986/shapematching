@@ -96,10 +96,14 @@ class ExtractMSS:
         ic = 0
         myfont = cv.cvInitFont(cv.CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5)
         for ic, c in enumerate(self.mss.seqs):
+          cnt = 0
           for k in c.points:
-            if (self.bDrawNumber):
-                cv.cvPutText(self.drawimg, str(ic), cv.cvPoint(int(k.x), int(k.y)), myfont, cv.cvScalar(255, 255, 0,0))
-            cv.cvDrawCircle(self.drawimg, cv.cvPoint(int(k.x), int(k.y)), 4, cv.cvScalar(255,0,255,0))
+            cnt += 1
+            if (int(cnt/2) * 2 != cnt): continue
+            cv.cvDrawCircle(self.drawimg, cv.cvPoint(int(k.x), int(k.y)), 4, cv.cvScalar(255,255,255,0))
+            if (self.bDrawNumber and (cnt > self.start) and cnt < self.start + 8*4 and len(c.points) > 30):
+                #cv.cvPutText(self.drawimg, str(cnt), cv.cvPoint(int(k.x) + 5, int(k.y)), myfont, cv.cvScalar(255, 255, 0,0))
+                cv.cvDrawCircle(self.drawimg, cv.cvPoint(int(k.x), int(k.y)), 4, cv.cvScalar(255,0, 255,0))
             #cv.cvDrawCircle(self.drawimg, cv.cvPoint(int(k.x), int(k.y)), 6, cv.cvScalar(255,255,255,0))
             #cv.cvDrawCircle(self.drawimg, cv.cvPoint(int(k.x), int(k.y)), 5, cv.cvScalar(255,255,255,0))
             #cv.cvDrawCircle(self.drawimg, cv.cvPoint(int(k.x), int(k.y)), 2, cv.cvScalar(255,255,255,0))
@@ -127,6 +131,7 @@ def main():
     ct.GetContour(args[1], options)
 
     if (options.display):
+        ct.start = options.threshold
         ct.DrawKeyPoints()
         highgui.cvNamedWindow ("contour", 1)
         highgui.cvShowImage ("contour", ct.drawimg)

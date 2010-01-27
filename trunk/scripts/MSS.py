@@ -65,8 +65,8 @@ class MSS:
         fp = open(filename, "r") 
         header = fp.readline().strip("\n").split("\t")
         
-        feaidx = [header.index(fld) for fld in header if fld.startswith("f")]
-        self.featname = [fld for fld in header if fld.startswith("f")]
+        feaidx = [header.index(fld) for fld in header if fld.startswith("f") or fld.startswith("g")]
+        self.featname = [fld for fld in header if fld.startswith("f") or fld.startswith("g")]
         seq_idx = header.index("seq")
         pnt_idx = header.index("ptn")
         x_idx = header.index("x")
@@ -105,7 +105,9 @@ class MSS:
         if len(self.seqs[0].points) == 0: return
         res = self.seqs[0].points[0].getvalues().keys()
         res.sort()
-        self.featname = [f for f in res if f.startswith("f") and f not in ['seq', 'pnt', 'x', 'y']]
+        print res
+        self.featname = [f for f in res if (f.startswith("f") or f.startswith("g")) and f not in ['seq', 'pnt', 'x', 'y']]
+        print self.featname
         fout = open(filename, "w")
         fout.write("seq\tptn\tx\ty\t" + "\t".join(self.featname) + "\n")
         for si, seq in enumerate(self.seqs):

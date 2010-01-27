@@ -4,8 +4,8 @@ import sys, math, string, optparse, fileinput, struct
 
 def main():
   
-    usage = "%prog [options]  <datafile.chn> <datafile.all> <datafile.fasta>"
-    version = "%prog 0.2\n Longbin Chen, longbinc@yahoo.com"
+    usage = "%prog [options]  <datafile.chn> <datafile.tsv> <datafile.fasta>"
+    version = "%prog 0.2\nGenerate fasta format data using codebook and original TSV feature file(to provide sequence info). Longbin Chen, longbinc@yahoo.com"
 
     oparser = optparse.OptionParser(usage=usage, version=version)
     oparser.add_option('-l', '--label', dest = 'label', default = None, help = 'label file: default: None')
@@ -29,16 +29,17 @@ def main():
         flabel.close()
     fout = open(args[3], "w")
     seqn = 0
-    fout.write(">mn| %s | %d %s\n" % (args[1][-6:], seqn, strlabel))
+    fout.write(">mn| %s | %d %s\n" % (args[1], seqn, strlabel))
     fdat  = open(args[1], "r")
     fall = open(args[2], "r")
     fall.readline()
     fdat.readline() # magic number line
     num = int(fdat.readline().strip("\n\t"))
+    fdat.readline() # code book size
     for i in range(num):
        seq = int(fall.readline().split("\t")[0])
        if seq != seqn:
-           fout.write("\n>mn| %s | %d %s\n" % (args[1][-6:], seq, strlabel))
+           fout.write("\n>mn| %s | %d %s\n" % (args[1], seq, strlabel))
            seqn = seq
        d = int(fdat.readline().strip("\n\t"))
        if (options.char):

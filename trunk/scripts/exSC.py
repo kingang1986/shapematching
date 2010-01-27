@@ -122,6 +122,10 @@ class exSC:
         for s in range(self.nbins_theta * self.nbins_r):
             for k in range(len(keypoints)):
                 keypoints[k].addvalue(varname[s], BH[k, s]/tsamp)
+        varname = ["gsc%2d"%(s) for s in range(self.nbins_theta * self.nbins_r)]
+        for s in range(self.nbins_theta * self.nbins_r):
+            for k in range(len(keypoints)):
+                keypoints[k].addvalue(varname[s], BH[k, s]/tsamp)
  
 def main():
     usage = "%s [options]  <MSS File> <MSSout>" % (sys.argv[0])
@@ -138,7 +142,11 @@ def main():
     mss = MSS()
     mss.load(args[1])
     keypoints = mss.getAllPoints()
-    sc.ExtractFeature(keypoints, range(options.head))
+    if (options.head == None):
+        hl = len(keypoints)
+    else:
+        hl = options.head
+    sc.ExtractFeature(keypoints, range(hl))
     mss.save(args[2])
 
 if __name__ == '__main__':

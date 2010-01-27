@@ -1,15 +1,50 @@
 #! /usr/bin/env python
- 
+'''
+extract angle features from the curves, 
+7 features are extracted:
+fag11, fag22, fag33, fag44 : angle with different granulatrity
 
-# import the necessary things for OpenCV
+ 
+'''
 
 import sys, math, string, fileinput, optparse
-from opencv import cv
-from opencv import highgui
 from MSS import *
-  
 
 class exAngle:
+    def __GetB(self, a, b, c):
+        xa = self.keypoints[a].x 
+        xb = self.keypoints[b].x 
+        xc = self.keypoints[c].x 
+        ya = self.keypoints[a].y 
+        yb = self.keypoints[b].y 
+        yc = self.keypoints[c].y 
+        x0 = (xa + xc) /2.0
+        y0 = (ya + yc) /2.0
+        xa -= x0
+        xb -= x0
+        xc -= x0
+        ya -= y0
+        yb -= y0
+        yc -= y0
+        L = math.sqrt( xc * xc + yc * yc)
+        x = xb * xc / L + yb * yc / L 
+        y = - xb * yc / L  + yb * xc / L  
+        return x, y
+
+    def GetBlur(self, distn ):
+        nPoint = len(self.keypoints)
+        for i in range(nPoint):
+            self.keypoints[i].fbx = 0
+            self.keypoints[i].fby = 0
+            self.keypoints[i].gby = 0
+            self.keypoints[i].gbx = 0
+        for i in range(distn, nPoint - distn):
+            dx, dy = self.__GetB(i - distn, i, i + distn) 
+            self.keypoints[i].fbx = dx
+            self.keypoints[i].fby = dy
+            self.keypoints[i].gbx = -dx
+            self.keypoints[i].gby = -dy
+        
     def __GetNAngle(self, distn):
         nPoint   = len(self.keypoints)
         for i in range(nPoint):
@@ -20,6 +55,13 @@ class exAngle:
             self.keypoints[i].fagout = 0
             self.keypoints[i].fagin = 0
             self.keypoints[i].fcurve = 0
+            self.keypoints[i].gag11 = 0
+            self.keypoints[i].gag22 = 0
+            self.keypoints[i].gag33 = 0
+            self.keypoints[i].gag44 = 0
+            self.keypoints[i].gagout = 0
+            self.keypoints[i].gagin = 0
+            self.keypoints[i].gcurve = 0
         for i in range(nPoint):
             iPrev = (i - distn + nPoint) % nPoint
             iNext = (i + distn + nPoint) % nPoint
@@ -35,8 +77,16 @@ class exAngle:
             self.keypoints[i].fag44 = self.__Get3PAngle(iPrev, i, iNext)
             self.keypoints[i].fagout = max(0, - self.keypoints[i].fag11)
             self.keypoints[i].fagin = max(0, self.keypoints[i].fag11)
+            self.keypoints[i].gag11 = - self.keypoints[i].fag11
+            self.keypoints[i].gag22 = - self.keypoints[i].fag22
+            self.keypoints[i].gag33 = - self.keypoints[i].fag33
+            self.keypoints[i].gag44 = - self.keypoints[i].fag44
+            self.keypoints[i].gagout = max(0,  -self.keypoints[i].gag11)
+            self.keypoints[i].gagin = max(0,  self.keypoints[i].gag11)
+            
         for i in range(nPoint):
             self.keypoints[i].fcurve = (self.keypoints[(i + 2) % nPoint].fag22 + self.keypoints[ (i - 2 + nPoint) % nPoint].fag22 - 2 * self.keypoints[i].fag22) / 2.0
+            self.keypoints[i].gcurve = -self.keypoints[i].fcurve
 
  
     def __GetAngle(self):
@@ -84,6 +134,7 @@ class exAngle:
         self.keypoints = keypoints
         self.img = img
         self.__GetNAngle(3)
+        self.GetBlur(2)
         return keypoints
         
         
