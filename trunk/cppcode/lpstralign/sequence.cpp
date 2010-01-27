@@ -606,7 +606,7 @@ void CSetOfSeq::UpdateTotalPoints()
 int CSetOfSeq::SplitSeq(int iSeqIndex, int iSplitPos1, int iSplitPos2)
 {
     CSequence* pSeq = m_vSeqs[iSeqIndex];
-    fprintf(stderr, "split %d (len %d ) from %d to %d \n", iSeqIndex, pSeq->GetPointNum(), iSplitPos1, iSplitPos2);
+//    fprintf(stderr, "split %d (len %d ) from %d to %d \n", iSeqIndex, pSeq->GetPointNum(), iSplitPos1, iSplitPos2);
     int iLen = pSeq->GetPointNum();
     if (iSplitPos1 > 0)
     {
