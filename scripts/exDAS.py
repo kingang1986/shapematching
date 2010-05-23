@@ -66,12 +66,13 @@ class exDAS:
         dx = p1.x - p2.x
         dy = p1.y - p2.y
         a1 = math.atan2(-dy, dx)
-        
         return a1
+
     def __GetDist(self, i, j):
     	dx = self.keypoints[i].x - self.keypoints[j].x
-    	dy = self.keypoints[j].y - self.keypoints[j].y
+    	dy = self.keypoints[i].y - self.keypoints[j].y
     	return math.sqrt(dx * dx + dy * dy) / self.fScale
+
     def __GetSupport(self):
         nPoint = len(self.keypoints)
         qrt = nPoint /4
