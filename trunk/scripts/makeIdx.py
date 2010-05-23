@@ -153,9 +153,8 @@ class  MSIndexer:
                     print " (%d, %s) " %( id, self.seqinfo[id] ),
                     cnt += 1
         print  "keycount, shapecount %d %d " %(cntkey, cnt)
-            
-             
     
+
 def main():
   
     usage = "%prog [options] <datafile.msidx> <datafile.idxed>"

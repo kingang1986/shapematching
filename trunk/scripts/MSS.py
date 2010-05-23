@@ -105,9 +105,7 @@ class MSS:
         if len(self.seqs[0].points) == 0: return
         res = self.seqs[0].points[0].getvalues().keys()
         res.sort()
-        print res
         self.featname = [f for f in res if (f.startswith("f") or f.startswith("g")) and f not in ['seq', 'pnt', 'x', 'y']]
-        print self.featname
         fout = open(filename, "w")
         fout.write("seq\tptn\tx\ty\t" + "\t".join(self.featname) + "\n")
         for si, seq in enumerate(self.seqs):

@@ -32,7 +32,6 @@ class exSC:
     def ExtractPartSC(self, Bsamp, Psamp):
         [nsamp, ndim] = Bsamp.shape
         [npart, ndim] = Psamp.shape
-        print nsamp, ndim, npart
         nbins_theta = self.nbins_theta
         nbins_r = self.nbins_r
         r_inner = 1.0/8
@@ -64,7 +63,6 @@ class exSC:
                 if (fz[n, k]):
                     sn[r_array_q[n, k] - 1, theta_array_q[n, k] - 1] += 1
             BH[n,:] = sn.reshape(nbins)
-#        print BH[0:1]
         return BH
         
     def ExtractSC(self, Bsamp):
@@ -110,7 +108,6 @@ class exSC:
         for k in range(len(keypoints)):
             Bsamp[k, 0] = keypoints[k].x
             Bsamp[k, 1] = keypoints[k].y
-        print targetlist
         if (targetlist):
             Psamp = Bsamp[targetlist]
             BH = self.ExtractPartSC(Bsamp, Psamp)
